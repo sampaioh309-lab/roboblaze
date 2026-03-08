@@ -5,11 +5,7 @@
 <title>SHARKBOT AI</title>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+*{margin:0;padding:0;box-sizing:border-box;}
 body{
 background:linear-gradient(270deg,#050505,#0a0a0a,#050505);
 background-size:400% 400%;
@@ -244,24 +240,18 @@ gerarSinais(tendencia)
 
 function gerarSinais(tendencia){
 let agora = new Date()
-let horaAtual = agora.getHours()
-let minutoAtual = agora.getMinutes()
 let lista = []
-let ultimoMinuto = minutoAtual
+let tempo = agora.getTime() // horário atual em ms
 
 for(let i=0;i<10;i++){ // 10 sinais
-let incremento = Math.floor(Math.random()*7)+1
-ultimoMinuto += incremento
-let hora = horaAtual
-if(ultimoMinuto>=60){hora += Math.floor(ultimoMinuto/60); ultimoMinuto = ultimoMinuto%60}
-hora = hora.toString().padStart(2,'0')
-let minuto = ultimoMinuto.toString().padStart(2,'0')
+let incrementoMinutos = Math.floor(Math.random()*7)+1
+tempo += incrementoMinutos*60000 // converte para ms
+let novaData = new Date(tempo)
+let hora = novaData.getHours().toString().padStart(2,'0')
+let minuto = novaData.getMinutes().toString().padStart(2,'0')
 
-// Determina cor
-let cor = tendencia
-if(Math.random()>0.5){cor = tendencia=="⚫" ? "🔴" : "⚫"}
-
-// Proteção no branco sempre
+// Define cor e sempre adiciona proteção no branco
+let cor = Math.random()>0.5 ? "🔴" : "⚫"
 let branco = "+⚪️"
 
 lista.push({hora,minuto,cor,branco})
@@ -303,4 +293,4 @@ setTimeout(()=>{botao.innerText = "COPIAR LISTA"},2000)
 </script>
 
 </body>
-  </html>
+</html>
