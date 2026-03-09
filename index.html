@@ -27,8 +27,8 @@ padding:30px;
 }
 
 .container{
-max-width:900px;
-width:95%;
+max-width:1200px;
+width:100%;
 margin:auto;
 background:#0f0f0f;
 padding:40px;
@@ -59,8 +59,8 @@ margin-bottom:25px;
 }
 
 button{
-padding:16px 30px;
-font-size:18px;
+padding:18px 40px;
+font-size:20px;
 background:linear-gradient(45deg,#00ffff,#00b3b3);
 border:none;
 border-radius:10px;
@@ -84,7 +84,7 @@ margin-top:25px;
 }
 
 #preview{
-max-width:600px;
+max-width:900px;
 width:100%;
 border-radius:15px;
 box-shadow:0 0 25px #00ffff66;
@@ -129,14 +129,14 @@ display:none;
 margin-top:25px;
 display:inline-block;
 text-align:left;
-font-size:22px;
+font-size:26px;
 line-height:36px;
 padding:25px 30px;
 background:#070707;
 border-radius:15px;
 box-shadow:0 0 20px #000, inset 0 0 15px #00ffff33;
 border:2px solid #00ffff33;
-min-width:400px;
+min-width:600px;
 word-break:break-word;
 }
 
@@ -268,7 +268,7 @@ let horaAtual = agora.getHours()
 let minutoAtual = agora.getMinutes()
 let lista = []
 let ultimoMinuto = minutoAtual
-for(let i=0;i<10;i++){ // lista de 10 sinais
+for(let i=0;i<10;i++){
 let incremento = Math.floor(Math.random()*6)+1
 ultimoMinuto += incremento
 let hora = horaAtual
@@ -306,7 +306,6 @@ let botao = document.getElementById("botao")
 botao.innerText = "LISTA COPIADA ✓"
 setTimeout(()=>{botao.innerText = "COPIAR LISTA"},2000)
 }
-
 </script>
 
 </body>
