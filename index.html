@@ -18,7 +18,7 @@ animation:fundo 10s infinite alternate;
 color:white;
 font-family:Arial, sans-serif;
 text-align:center;
-padding:20px;
+padding:30px;
 }
 
 @keyframes fundo{
@@ -27,68 +27,68 @@ padding:20px;
 }
 
 .container{
-max-width:700px;
-width:90%;
+max-width:900px;
+width:95%;
 margin:auto;
 background:#0f0f0f;
-padding:30px;
-border-radius:15px;
-box-shadow:0 0 25px #00ffff22;
-border:1px solid #00ffff33;
+padding:40px;
+border-radius:20px;
+box-shadow:0 0 35px #00ffff33;
+border:2px solid #00ffff44;
 position:relative;
 z-index:1;
 }
 
 h1{
-font-size:36px;
-margin-bottom:10px;
+font-size:48px;
+margin-bottom:15px;
 color:#00ffff;
-text-shadow:0 0 5px #00ffff,0 0 20px #00ffff;
+text-shadow:0 0 8px #00ffff,0 0 30px #00ffff;
 animation:glow 2s infinite alternate;
 }
 
 @keyframes glow{
-from{ text-shadow:0 0 5px #00ffff}
-to{ text-shadow:0 0 20px #00ffff,0 0 40px #00ffff}
+from{ text-shadow:0 0 8px #00ffff}
+to{ text-shadow:0 0 30px #00ffff,0 0 60px #00ffff}
 }
 
 #assinatura{
-font-size:14px;
-color:#00ffffaa;
-margin-bottom:20px;
+font-size:18px;
+color:#00ffffcc;
+margin-bottom:25px;
 }
 
 button{
-padding:12px 24px;
-font-size:16px;
+padding:16px 30px;
+font-size:18px;
 background:linear-gradient(45deg,#00ffff,#00b3b3);
 border:none;
-border-radius:8px;
+border-radius:10px;
 cursor:pointer;
-margin-top:15px;
+margin-top:20px;
 color:#000;
 font-weight:bold;
 transition:0.3s;
-box-shadow:0 0 10px #00ffff55;
+box-shadow:0 0 12px #00ffff66;
 }
 
 button:hover{
 transform:scale(1.05);
-box-shadow:0 0 20px #00ffffaa;
+box-shadow:0 0 25px #00ffffaa;
 }
 
 #preview-container{
 position:relative;
 display:inline-block;
-margin-top:20px;
+margin-top:25px;
 }
 
 #preview{
-max-width:400px;
+max-width:600px;
 width:100%;
-border-radius:10px;
-box-shadow:0 0 15px #00ffff55;
-border:1px solid #00ffff33;
+border-radius:15px;
+box-shadow:0 0 25px #00ffff66;
+border:2px solid #00ffff44;
 transition:0.4s;
 }
 
@@ -100,15 +100,15 @@ width:100%;
 height:100%;
 display:none;
 overflow:hidden;
-border-radius:10px;
+border-radius:15px;
 }
 
 #scanbar{
 position:absolute;
 width:100%;
-height:6px;
+height:8px;
 background:#00ffff;
-box-shadow:0 0 20px #00ffff;
+box-shadow:0 0 25px #00ffff;
 animation:scan 4s linear infinite;
 }
 
@@ -119,31 +119,31 @@ animation:scan 4s linear infinite;
 }
 
 #status{
-margin-top:15px;
+margin-top:20px;
 color:#00ffff;
-font-size:16px;
+font-size:18px;
 display:none;
 }
 
 #resultado{
-margin-top:20px;
+margin-top:25px;
 display:inline-block;
 text-align:left;
-font-size:18px;
-line-height:28px;
-padding:20px;
+font-size:22px;
+line-height:36px;
+padding:25px 30px;
 background:#070707;
-border-radius:12px;
-box-shadow:0 0 15px #000, inset 0 0 10px #00ffff22;
-border:1px solid #00ffff22;
-min-width:300px;
+border-radius:15px;
+box-shadow:0 0 20px #000, inset 0 0 15px #00ffff33;
+border:2px solid #00ffff33;
+min-width:400px;
 word-break:break-word;
 }
 
 #recomendacao{
-margin-top:10px;
-font-size:16px;
-line-height:24px;
+margin-top:15px;
+font-size:20px;
+line-height:28px;
 text-align:left;
 white-space:pre-wrap;
 }
@@ -156,7 +156,6 @@ width:100%;
 height:100%;
 z-index:-1;
 }
-
 </style>
 </head>
 
@@ -202,7 +201,7 @@ canvas.height = window.innerHeight
 canvas.width = window.innerWidth
 const letters = "01SHARKBOTAI"
 const array = letters.split("")
-const fontSize = 16
+const fontSize = 18
 const columns = canvas.width / fontSize
 const drops = []
 for(let x = 0; x < columns; x++) drops[x] = 1
@@ -307,7 +306,8 @@ let botao = document.getElementById("botao")
 botao.innerText = "LISTA COPIADA ✓"
 setTimeout(()=>{botao.innerText = "COPIAR LISTA"},2000)
 }
+
 </script>
 
 </body>
-  </html>
+</html>
