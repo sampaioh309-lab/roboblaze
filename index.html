@@ -27,8 +27,8 @@ padding:30px;
 }
 
 .container{
-max-width:1200px;
-width:100%;
+max-width:900px;
+width:95%;
 margin:auto;
 background:#0f0f0f;
 padding:40px;
@@ -59,8 +59,8 @@ margin-bottom:25px;
 }
 
 button{
-padding:18px 40px;
-font-size:20px;
+padding:16px 30px;
+font-size:18px;
 background:linear-gradient(45deg,#00ffff,#00b3b3);
 border:none;
 border-radius:10px;
@@ -84,7 +84,7 @@ margin-top:25px;
 }
 
 #preview{
-max-width:900px;
+max-width:600px;
 width:100%;
 border-radius:15px;
 box-shadow:0 0 25px #00ffff66;
@@ -129,14 +129,14 @@ display:none;
 margin-top:25px;
 display:inline-block;
 text-align:left;
-font-size:26px;
+font-size:22px;
 line-height:36px;
 padding:25px 30px;
 background:#070707;
 border-radius:15px;
 box-shadow:0 0 20px #000, inset 0 0 15px #00ffff33;
 border:2px solid #00ffff33;
-min-width:600px;
+min-width:400px;
 word-break:break-word;
 }
 
@@ -194,6 +194,7 @@ Recomendação:
 </div>
 
 <script>
+
 // MATRIX BACKGROUND
 const canvas = document.getElementById("matrix")
 const ctx = canvas.getContext("2d")
@@ -205,107 +206,186 @@ const fontSize = 18
 const columns = canvas.width / fontSize
 const drops = []
 for(let x = 0; x < columns; x++) drops[x] = 1
+
 function drawMatrix(){
 ctx.fillStyle = "rgba(0,0,0,0.05)"
 ctx.fillRect(0,0,canvas.width,canvas.height)
 ctx.fillStyle = "#00ffff"
 ctx.font = fontSize + "px monospace"
+
 for(let i = 0; i < drops.length; i++){
 const text = array[Math.floor(Math.random()*array.length)]
 ctx.fillText(text,i*fontSize,drops[i]*fontSize)
-if(drops[i]*fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0
+
+if(drops[i]*fontSize > canvas.height && Math.random() > 0.975)
+drops[i] = 0
+
 drops[i]++
 }}
+
 setInterval(drawMatrix,35)
+
 
 // ROBÔ
 let imagemCarregada = null
 let listaTexto = ""
 
 document.getElementById("upload").addEventListener("change", function(e){
+
 let file = e.target.files[0]
 let reader = new FileReader()
+
 reader.onload = function(event){
+
 document.getElementById("preview").src = event.target.result
+
 let img = new Image()
 img.src = event.target.result
-img.onload = function(){imagemCarregada = img}
+
+img.onload = function(){
+imagemCarregada = img
 }
+
+}
+
 reader.readAsDataURL(file)
+
 })
 
+
 function analisar(){
-if(!imagemCarregada){alert("Envie uma imagem primeiro"); return}
+
+if(!imagemCarregada){
+alert("Envie uma imagem primeiro")
+return
+}
+
 document.getElementById("scanner").style.display="block"
 document.getElementById("status").style.display="block"
 document.getElementById("resultado").innerHTML=""
 document.getElementById("preview").style.filter="brightness(0.4)"
+
 setTimeout(processarImagem,4000)
+
 }
+
 
 function processarImagem(){
+
 let canvas = document.createElement("canvas")
 let ctx = canvas.getContext("2d")
+
 canvas.width = imagemCarregada.width
 canvas.height = imagemCarregada.height
+
 ctx.drawImage(imagemCarregada,0,0)
+
 let data = ctx.getImageData(0,0,canvas.width,canvas.height).data
+
 let preto = 0
 let vermelho = 0
+
 for(let i=0;i<data.length;i+=4){
-let r = data[i], g = data[i+1], b = data[i+2]
-if(r>180 && g<80 && b<80){vermelho++}
-else if(r<80 && g<80 && b<80){preto++}
+
+let r = data[i]
+let g = data[i+1]
+let b = data[i+2]
+
+if(r>180 && g<80 && b<80){
+vermelho++
 }
-let tendencia="⚫"
-if(vermelho>preto) tendencia="🔴"
-gerarSinais(tendencia)
+else if(r<80 && g<80 && b<80){
+preto++
 }
 
+}
+
+let tendencia="⚫"
+
+if(vermelho>preto){
+tendencia="🔴"
+}
+
+gerarSinais(tendencia)
+
+}
+
+
+// FUNÇÃO CORRIGIDA
 function gerarSinais(tendencia){
-let agora = new Date()
-let horaAtual = agora.getHours()
-let minutoAtual = agora.getMinutes()
+
+let data = new Date()
+
 let lista = []
-let ultimoMinuto = minutoAtual
+
 for(let i=0;i<10;i++){
+
 let incremento = Math.floor(Math.random()*6)+1
-ultimoMinuto += incremento
-let hora = horaAtual
-if(ultimoMinuto>=60){hora += Math.floor(ultimoMinuto/60); ultimoMinuto = ultimoMinuto%60}
-hora = hora.toString().padStart(2,'0')
-let minuto = ultimoMinuto.toString().padStart(2,'0')
+
+data.setMinutes(data.getMinutes() + incremento)
+
+let hora = data.getHours().toString().padStart(2,'0')
+let minuto = data.getMinutes().toString().padStart(2,'0')
+
 let cor = Math.random()>0.5 ? "🔴" : "⚫"
-let branco="+⚪️"
+let branco = "+⚪️"
+
 lista.push({hora,minuto,cor,branco})
+
 }
+
 mostrar(lista)
+
 }
+
 
 function mostrar(lista){
+
 document.getElementById("scanner").style.display="none"
 document.getElementById("status").style.display="none"
 document.getElementById("preview").style.filter="brightness(1)"
+
 let div = document.getElementById("resultado")
+
 div.innerHTML=""
 listaTexto=""
+
 lista.forEach(item=>{
+
 let linha = `${item.hora}:${item.minuto} ${item.cor}${item.branco}`
+
 div.innerHTML += linha + "<br>"
+
 listaTexto += linha + "\n"
+
 })
+
 listaTexto += "\nRecomendação:\n.Apostar até G1\n.Não entrar contra a tendência\n(🟥🟥🟥🟥) ou (⬛️⬛️⬛️⬛️)"
+
 let botao = document.getElementById("botao")
+
 botao.innerText = "COPIAR LISTA"
 botao.onclick = copiarLista
+
 }
 
+
 function copiarLista(){
+
 navigator.clipboard.writeText(listaTexto)
+
 let botao = document.getElementById("botao")
+
 botao.innerText = "LISTA COPIADA ✓"
-setTimeout(()=>{botao.innerText = "COPIAR LISTA"},2000)
+
+setTimeout(()=>{
+
+botao.innerText = "COPIAR LISTA"
+
+},2000)
+
 }
+
 </script>
 
 </body>
