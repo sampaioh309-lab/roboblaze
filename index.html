@@ -5,157 +5,149 @@
 <title>SHARKBOT AI</title>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-background:linear-gradient(270deg,#050505,#0a0a0a,#050505);
-background-size:400% 400%;
-animation:fundo 10s infinite alternate;
-color:white;
-font-family:Arial, sans-serif;
-text-align:center;
-padding:30px;
+body {
+    background: #050505;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+    padding: 30px;
+    overflow-x: hidden;
 }
 
-@keyframes fundo{
-0%{background-position:0%}
-100%{background-position:100%}
+#matrix {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
 }
 
-.container{
-max-width:900px;
-width:95%;
-margin:auto;
-background:#0f0f0f;
-padding:40px;
-border-radius:20px;
-box-shadow:0 0 35px #00ffff33;
-border:2px solid #00ffff44;
-position:relative;
-z-index:1;
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: #0f0f0f;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 35px #00ffff33;
+    border: 2px solid #00ffff44;
 }
 
-h1{
-font-size:48px;
-margin-bottom:15px;
-color:#00ffff;
-text-shadow:0 0 8px #00ffff,0 0 30px #00ffff;
-animation:glow 2s infinite alternate;
+h1 {
+    font-size: 48px;
+    color: #00ffff;
+    text-shadow: 0 0 20px #00ffff;
+    margin-bottom: 10px;
 }
 
-@keyframes glow{
-from{ text-shadow:0 0 8px #00ffff}
-to{ text-shadow:0 0 30px #00ffff,0 0 60px #00ffff}
+#assinatura {
+    color: #00ffff;
+    margin-bottom: 20px;
 }
 
-#assinatura{
-font-size:18px;
-color:#00ffffcc;
-margin-bottom:25px;
+button {
+    padding: 16px 30px;
+    font-size: 18px;
+    background: linear-gradient(45deg, #00ffff, #00b3b3);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 10px;
+    font-weight: bold;
 }
 
-button{
-padding:16px 30px;
-font-size:18px;
-background:linear-gradient(45deg,#00ffff,#00b3b3);
-border:none;
-border-radius:10px;
-cursor:pointer;
-margin-top:20px;
-color:#000;
-font-weight:bold;
-transition:0.3s;
-box-shadow:0 0 12px #00ffff66;
+#previewBox {
+    position: relative;
+    display: inline-block;
 }
 
-button:hover{
-transform:scale(1.05);
-box-shadow:0 0 25px #00ffffaa;
+#preview {
+    max-width: 600px;
+    width: 100%;
+    border-radius: 15px;
+    margin-top: 20px;
+    display: none;
+    border: 2px solid #00ffff55;
 }
 
-#preview-container{
-position:relative;
-display:inline-block;
-margin-top:25px;
+#scanLine {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #00ff9d;
+    box-shadow: 0 0 15px #00ff9d;
+    display: none;
 }
 
-#preview{
-max-width:600px;
-width:100%;
-border-radius:15px;
-box-shadow:0 0 25px #00ffff66;
-border:2px solid #00ffff44;
-transition:0.4s;
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    display: none;
 }
 
-#scanner{
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-display:none;
-overflow:hidden;
-border-radius:15px;
+#status {
+    margin-top: 20px;
+    color: #00ffff;
+    display: none;
+    font-size: 18px;
 }
 
-#scanbar{
-position:absolute;
-width:100%;
-height:8px;
-background:#00ffff;
-box-shadow:0 0 25px #00ffff;
-animation:scan 4s linear infinite;
+#barra-container {
+    width: 100%;
+    height: 10px;
+    background: #111;
+    border-radius: 10px;
+    margin-top: 10px;
+    display: none;
 }
 
-@keyframes scan{
-0%{top:0%}
-50%{top:100%}
-100%{top:0%}
+#barra {
+    width: 0%;
+    height: 100%;
+    background: #00ffff;
 }
 
-#status{
-margin-top:20px;
-color:#00ffff;
-font-size:18px;
-display:none;
+#resultado {
+    margin-top: 25px;
+    text-align: left;
+    font-size: 22px;
+    padding: 20px;
+    background: #070707;
+    border-radius: 15px;
+    border: 2px solid #00ffff33;
+    min-height: 120px;
+    line-height: 34px;
 }
 
-#resultado{
-margin-top:25px;
-display:inline-block;
-text-align:left;
-font-size:22px;
-line-height:36px;
-padding:25px 30px;
-background:#070707;
-border-radius:15px;
-box-shadow:0 0 20px #000, inset 0 0 15px #00ffff33;
-border:2px solid #00ffff33;
-min-width:400px;
-word-break:break-word;
+#copiar {
+    display: none;
 }
 
-#recomendacao{
-margin-top:15px;
-font-size:20px;
-line-height:28px;
-text-align:left;
-white-space:pre-wrap;
+#recomendacoes {
+    margin-top: 20px;
+    background: #050505;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #00ffff33;
+    color: #00ffff;
+    text-align: left;
+    display: none;
+    line-height: 28px;
 }
 
-#matrix{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-z-index:-1;
-}
 </style>
 </head>
 
@@ -165,228 +157,198 @@ z-index:-1;
 
 <div class="container">
 
-<h1>SHARKBOT AI</h1>
-<div id="assinatura">Developed by Henrique Sampaio</div>
+    <h1>SHARKBOT AI</h1>
 
-<input type="file" id="upload">
+    <div id="assinatura">
+        Developed by Henrique Sampaio
+    </div>
 
-<div id="preview-container">
-<img id="preview">
-<div id="scanner">
-<div id="scanbar"></div>
-</div>
-</div>
+    <input type="file" id="upload" accept="image/*" style="display: none">
 
-<br>
+    <button onclick="document.getElementById('upload').click()">
+        CARREGAR PRINT
+    </button>
 
-<button id="botao" onclick="analisar()">ANALISAR HISTÓRICO</button>
+    <br>
 
-<div id="status">Escaneando histórico...</div>
+    <div id="previewBox">
+        <img id="preview">
+        <div id="overlay"></div>
+        <div id="scanLine"></div>
+    </div>
 
-<div id="resultado"></div>
-<div id="recomendacao">
-Recomendação:
-.Apostar até G1
-.Não entrar contra a tendência 
-(🟥🟥🟥🟥) ou (⬛️⬛️⬛️⬛️)
-</div>
+    <br>
+
+    <button onclick="analisar()">
+        ANALISAR HISTÓRICO
+    </button>
+
+    <div id="status">
+        Escaneando histórico...
+    </div>
+
+    <div id="barra-container">
+        <div id="barra"></div>
+    </div>
+
+    <div id="resultado"></div>
+
+    <button id="copiar" onclick="copiarLista()">
+        COPIAR LISTA
+    </button>
+
+    <div id="recomendacoes">
+        <b>RECOMENDAÇÕES</b><br><br>
+        • Entrar até G1<br>
+        • Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)<br>
+        • NÃO entrar após sair branco ⚪
+    </div>
 
 </div>
 
 <script>
 
-// MATRIX BACKGROUND
+// MATRIX
+
 const canvas = document.getElementById("matrix")
 const ctx = canvas.getContext("2d")
+
 canvas.height = window.innerHeight
 canvas.width = window.innerWidth
+
 const letters = "01SHARKBOTAI"
 const array = letters.split("")
 const fontSize = 18
 const columns = canvas.width / fontSize
+
 const drops = []
-for(let x = 0; x < columns; x++) drops[x] = 1
 
-function drawMatrix(){
-ctx.fillStyle = "rgba(0,0,0,0.05)"
-ctx.fillRect(0,0,canvas.width,canvas.height)
-ctx.fillStyle = "#00ffff"
-ctx.font = fontSize + "px monospace"
+for (let x = 0; x < columns; x++) {
+    drops[x] = 1
+}
 
-for(let i = 0; i < drops.length; i++){
-const text = array[Math.floor(Math.random()*array.length)]
-ctx.fillText(text,i*fontSize,drops[i]*fontSize)
+function drawMatrix() {
+    ctx.fillStyle = "rgba(0,0,0,0.05)"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-if(drops[i]*fontSize > canvas.height && Math.random() > 0.975)
-drops[i] = 0
+    ctx.fillStyle = "#00ffff"
+    ctx.font = fontSize + "px monospace"
 
-drops[i]++
-}}
+    for (let i = 0; i < drops.length; i++) {
+        const text = array[Math.floor(Math.random() * array.length)]
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize)
 
-setInterval(drawMatrix,35)
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0
+        }
 
+        drops[i]++
+    }
+}
 
-// ROBÔ
+setInterval(drawMatrix, 35)
+
+// UPLOAD
+
 let imagemCarregada = null
-let listaTexto = ""
 
-document.getElementById("upload").addEventListener("change", function(e){
+document.getElementById("upload").addEventListener("change", function(e) {
+    let file = e.target.files[0]
+    let reader = new FileReader()
 
-let file = e.target.files[0]
-let reader = new FileReader()
+    reader.onload = function(event) {
+        let preview = document.getElementById("preview")
+        preview.src = event.target.result
+        preview.style.display = "block"
 
-reader.onload = function(event){
+        let img = new Image()
+        img.src = event.target.result
 
-document.getElementById("preview").src = event.target.result
+        img.onload = function() {
+            imagemCarregada = img
+        }
+    }
 
-let img = new Image()
-img.src = event.target.result
-
-img.onload = function(){
-imagemCarregada = img
-}
-
-}
-
-reader.readAsDataURL(file)
-
+    reader.readAsDataURL(file)
 })
 
+// ANALISAR
 
-function analisar(){
+function analisar() {
+    if (!imagemCarregada) {
+        alert("Carregue um print primeiro")
+        return
+    }
 
-if(!imagemCarregada){
-alert("Envie uma imagem primeiro")
-return
+    document.getElementById("status").style.display = "block"
+    document.getElementById("barra-container").style.display = "block"
+    document.getElementById("overlay").style.display = "block"
+    document.getElementById("scanLine").style.display = "block"
+
+    let barra = document.getElementById("barra")
+    let linha = document.getElementById("scanLine")
+    let img = document.getElementById("preview")
+
+    barra.style.width = "0%"
+
+    let progresso = 0
+    let pos = 0
+
+    let altura = img.offsetHeight
+
+    let intervalo = setInterval(() => {
+        progresso += 5
+        pos += altura / 20
+
+        barra.style.width = progresso + "%"
+        linha.style.top = pos + "px"
+
+        if (progresso >= 100) {
+            clearInterval(intervalo)
+            document.getElementById("overlay").style.display = "none"
+            document.getElementById("scanLine").style.display = "none"
+            gerarLista()
+        }
+
+    }, 120)
 }
 
-document.getElementById("scanner").style.display="block"
-document.getElementById("status").style.display="block"
-document.getElementById("resultado").innerHTML=""
-document.getElementById("preview").style.filter="brightness(0.4)"
+// GERAR LISTA
 
-setTimeout(processarImagem,4000)
+function gerarLista() {
+    let data = new Date()
 
+    let listaHTML = ""
+    let listaTexto = ""
+
+    for (let i = 0; i < 10; i++) {
+        data.setMinutes(data.getMinutes() + 3)
+
+        let hora = data.getHours().toString().padStart(2, "0")
+        let minuto = data.getMinutes().toString().padStart(2, "0")
+
+        let cor = Math.random() > 0.5 ? "🔴" : "⚫"
+
+        listaHTML += hora + ":" + minuto + " " + cor + " +⚪<br>"
+        listaTexto += hora + ":" + minuto + " " + cor + " +⚪\n"
+    }
+
+    document.getElementById("resultado").innerHTML = listaHTML
+    window.listaCopiar = listaTexto
+
+    document.getElementById("copiar").style.display = "inline-block"
+    document.getElementById("status").style.display = "none"
+    document.getElementById("recomendacoes").style.display = "block"
 }
 
+// COPIAR LISTA
 
-function processarImagem(){
-
-let canvas = document.createElement("canvas")
-let ctx = canvas.getContext("2d")
-
-canvas.width = imagemCarregada.width
-canvas.height = imagemCarregada.height
-
-ctx.drawImage(imagemCarregada,0,0)
-
-let data = ctx.getImageData(0,0,canvas.width,canvas.height).data
-
-let preto = 0
-let vermelho = 0
-
-for(let i=0;i<data.length;i+=4){
-
-let r = data[i]
-let g = data[i+1]
-let b = data[i+2]
-
-if(r>180 && g<80 && b<80){
-vermelho++
-}
-else if(r<80 && g<80 && b<80){
-preto++
-}
-
-}
-
-let tendencia="⚫"
-
-if(vermelho>preto){
-tendencia="🔴"
-}
-
-gerarSinais(tendencia)
-
-}
-
-
-// FUNÇÃO CORRIGIDA
-function gerarSinais(tendencia){
-
-let data = new Date()
-
-let lista = []
-
-for(let i=0;i<10;i++){
-
-let incremento = Math.floor(Math.random()*6)+1
-
-data.setMinutes(data.getMinutes() + incremento)
-
-let hora = data.getHours().toString().padStart(2,'0')
-let minuto = data.getMinutes().toString().padStart(2,'0')
-
-let cor = Math.random()>0.5 ? "🔴" : "⚫"
-let branco = "+⚪️"
-
-lista.push({hora,minuto,cor,branco})
-
-}
-
-mostrar(lista)
-
-}
-
-
-function mostrar(lista){
-
-document.getElementById("scanner").style.display="none"
-document.getElementById("status").style.display="none"
-document.getElementById("preview").style.filter="brightness(1)"
-
-let div = document.getElementById("resultado")
-
-div.innerHTML=""
-listaTexto=""
-
-lista.forEach(item=>{
-
-let linha = `${item.hora}:${item.minuto} ${item.cor}${item.branco}`
-
-div.innerHTML += linha + "<br>"
-
-listaTexto += linha + "\n"
-
-})
-
-listaTexto += "\nRecomendação:\n.Apostar até G1\n.Não entrar contra a tendência\n(🟥🟥🟥🟥) ou (⬛️⬛️⬛️⬛️)"
-
-let botao = document.getElementById("botao")
-
-botao.innerText = "COPIAR LISTA"
-botao.onclick = copiarLista
-
-}
-
-
-function copiarLista(){
-
-navigator.clipboard.writeText(listaTexto)
-
-let botao = document.getElementById("botao")
-
-botao.innerText = "LISTA COPIADA ✓"
-
-setTimeout(()=>{
-
-botao.innerText = "COPIAR LISTA"
-
-},2000)
-
+function copiarLista() {
+    navigator.clipboard.writeText(window.listaCopiar)
+    alert("Lista copiada!")
 }
 
 </script>
 
 </body>
-</html>
+  </html>
