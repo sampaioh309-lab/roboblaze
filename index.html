@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
 <meta charset="UTF-8">
 <title>SHARKBOT AI</title>
@@ -18,16 +18,6 @@ color:white;
 font-family:Arial;
 text-align:center;
 padding:30px;
-overflow-x:hidden;
-}
-
-#matrix{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-z-index:-1;
 }
 
 .container{
@@ -36,116 +26,102 @@ margin:auto;
 background:#0f0f0f;
 padding:40px;
 border-radius:20px;
-box-shadow:0 0 35px #00ffff33;
-border:2px solid #00ffff44;
+box-shadow:0 0 30px #00ffff33;
 }
 
 h1{
 font-size:48px;
 color:#00ffff;
-text-shadow:0 0 20px #00ffff;
 margin-bottom:10px;
 }
 
 #assinatura{
-color:#00ffff;
-margin-bottom:20px;
+color:#00ffffaa;
+margin-bottom:25px;
 }
 
 button{
-padding:16px 30px;
+padding:15px 25px;
 font-size:18px;
-background:linear-gradient(45deg,#00ffff,#00b3b3);
+background:#00ffff;
 border:none;
 border-radius:10px;
 cursor:pointer;
-margin:10px;
 font-weight:bold;
+margin-top:20px;
 }
 
-#previewBox{
+#preview-container{
 position:relative;
 display:inline-block;
+margin-top:20px;
 }
 
 #preview{
 max-width:600px;
 width:100%;
-border-radius:15px;
-margin-top:20px;
-display:none;
+border-radius:10px;
 border:2px solid #00ffff55;
 }
 
-#scanLine{
-position:absolute;
-left:0;
-width:100%;
-height:3px;
-background:#00ff9d;
-box-shadow:0 0 15px #00ff9d;
-display:none;
-}
-
-#overlay{
+#scanner{
 position:absolute;
 top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.5);
-border-radius:15px;
 display:none;
 }
 
-#status{
-margin-top:20px;
-color:#00ffff;
-display:none;
-font-size:18px;
-}
-
-#barra-container{
+#scanbar{
+position:absolute;
 width:100%;
-height:10px;
-background:#111;
-border-radius:10px;
-margin-top:10px;
-display:none;
+height:6px;
+background:#00ffff;
+box-shadow:0 0 20px #00ffff;
+animation:scan 4s linear infinite;
+}
+
+@keyframes scan{
+0%{top:0%}
+50%{top:100%}
+100%{top:0%}
 }
 
 #barra{
-width:0%;
+width:100%;
+height:12px;
+background:#111;
+border-radius:10px;
+margin-top:20px;
+overflow:hidden;
+display:none;
+}
+
+#progresso{
 height:100%;
+width:0%;
 background:#00ffff;
 }
 
 #resultado{
 margin-top:25px;
-text-align:left;
 font-size:22px;
-padding:20px;
-background:#070707;
-border-radius:15px;
-border:2px solid #00ffff33;
-min-height:120px;
-line-height:34px;
+line-height:35px;
 }
 
-#copiar{
-display:none;
-}
-
-#recomendacoes{
+#recomendacao{
 margin-top:20px;
-background:#050505;
-padding:20px;
-border-radius:12px;
-border:1px solid #00ffff33;
-color:#00ffff;
+font-size:18px;
 text-align:left;
-display:none;
-line-height:28px;
+display:inline-block;
+}
+
+canvas{
+position:fixed;
+top:0;
+left:0;
+z-index:-1;
 }
 
 </style>
@@ -158,58 +134,54 @@ line-height:28px;
 <div class="container">
 
 <h1>SHARKBOT AI</h1>
+<div id="assinatura">Developed by Henrique Sampaio</div>
 
-<div id="assinatura">
-Developed by Henrique Sampaio
-</div>
+<input type="file" id="upload">
 
-<input type="file" id="upload" accept="image/*" style="display:none">
+<div id="preview-container">
 
-<button onclick="document.getElementById('upload').click()">
-CARREGAR PRINT
-</button>
-
-<br>
-
-<div id="previewBox">
 <img id="preview">
-<div id="overlay"></div>
-<div id="scanLine"></div>
+
+<div id="scanner">
+<div id="scanbar"></div>
+</div>
+
+</div>
+
+<div id="barra">
+<div id="progresso"></div>
 </div>
 
 <br>
 
-<button onclick="analisar()">
-ANALISAR HISTÓRICO
-</button>
-
-<div id="status">
-Escaneando histórico...
-</div>
-
-<div id="barra-container">
-<div id="barra"></div>
-</div>
+<button id="analisarBtn">ANALISAR HISTÓRICO</button>
 
 <div id="resultado"></div>
 
-<button id="copiar" onclick="copiarLista()">
-COPIAR LISTA
-</button>
+<div id="recomendacao">
 
-<div id="recomendacoes">
+<b>RECOMENDAÇÕES</b>
 
-<b>RECOMENDAÇÕES</b><br><br>
+<br><br>
 
-• Entrar até G1<br>
-• Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)<br>
+• Entrar até G1  
+• Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)  
 • NÃO entrar após sair branco ⚪
 
 </div>
 
+<br>
+
+<button id="copiarBtn">COPIAR LISTA</button>
+
 </div>
 
 <script>
+
+let imagemCarregada=null
+let textoCopiar=""
+
+// MATRIX
 
 const canvas=document.getElementById("matrix")
 const ctx=canvas.getContext("2d")
@@ -217,18 +189,17 @@ const ctx=canvas.getContext("2d")
 canvas.height=window.innerHeight
 canvas.width=window.innerWidth
 
-const letters="01SHARKBOTAI"
-const array=letters.split("")
+const letras="SHARKBOT01"
+const array=letras.split("")
 const fontSize=18
 const columns=canvas.width/fontSize
-
 const drops=[]
 
-for(let x=0;x<columns;x++){
-drops[x]=1
+for(let i=0;i<columns;i++){
+drops[i]=1
 }
 
-function drawMatrix(){
+function draw(){
 
 ctx.fillStyle="rgba(0,0,0,0.05)"
 ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -252,9 +223,10 @@ drops[i]++
 
 }
 
-setInterval(drawMatrix,35)
+setInterval(draw,35)
 
-let imagemCarregada=null
+
+// CARREGAR PRINT
 
 document.getElementById("upload").addEventListener("change",function(e){
 
@@ -263,9 +235,7 @@ let reader=new FileReader()
 
 reader.onload=function(event){
 
-let preview=document.getElementById("preview")
-preview.src=event.target.result
-preview.style.display="block"
+document.getElementById("preview").src=event.target.result
 
 let img=new Image()
 img.src=event.target.result
@@ -280,84 +250,89 @@ reader.readAsDataURL(file)
 
 })
 
-function analisar(){
+
+// ANALISAR
+
+document.getElementById("analisarBtn").onclick=function(){
 
 if(!imagemCarregada){
-alert("Carregue um print primeiro")
+
+alert("Envie uma imagem")
+
 return
+
 }
 
-document.getElementById("status").style.display="block"
-document.getElementById("barra-container").style.display="block"
-document.getElementById("overlay").style.display="block"
-document.getElementById("scanLine").style.display="block"
-
-let barra=document.getElementById("barra")
-let linha=document.getElementById("scanLine")
-let img=document.getElementById("preview")
-
-barra.style.width="0%"
+document.getElementById("scanner").style.display="block"
+document.getElementById("barra").style.display="block"
+document.getElementById("preview").style.filter="brightness(0.4)"
 
 let progresso=0
-let pos=0
-let altura=img.offsetHeight
 
-let intervalo=setInterval(()=>{
+let barra=setInterval(function(){
 
-progresso+=5
-pos+=altura/20
+progresso++
 
-barra.style.width=progresso+"%"
-linha.style.top=pos+"px"
+document.getElementById("progresso").style.width=progresso+"%"
 
 if(progresso>=100){
 
-clearInterval(intervalo)
+clearInterval(barra)
 
-document.getElementById("overlay").style.display="none"
-document.getElementById("scanLine").style.display="none"
-
-gerarLista()
+processarImagem()
 
 }
 
-},120)
+},40)
 
 }
 
-function gerarLista(){
 
-let data=new Date()
+function processarImagem(){
 
-let listaHTML=""
-let listaTexto=""
+let sinais=[]
+
+let agora=new Date()
 
 for(let i=0;i<10;i++){
 
-data.setMinutes(data.getMinutes()+3)
+agora.setMinutes(agora.getMinutes()+3)
 
-let hora=data.getHours().toString().padStart(2,"0")
-let minuto=data.getMinutes().toString().padStart(2,"0")
+let h=agora.getHours().toString().padStart(2,'0')
+let m=agora.getMinutes().toString().padStart(2,'0')
 
 let cor=Math.random()>0.5?"🔴":"⚫"
 
-listaHTML+=hora+":"+minuto+" "+cor+" +⚪<br>"
-listaTexto+=hora+":"+minuto+" "+cor+" +⚪\n"
+sinais.push(`${h}:${m} ${cor}+⚪`)
 
 }
 
-document.getElementById("resultado").innerHTML=listaHTML
-window.listaCopiar=listaTexto
-
-document.getElementById("copiar").style.display="inline-block"
-document.getElementById("status").style.display="none"
-document.getElementById("recomendacoes").style.display="block"
+mostrar(sinais)
 
 }
 
-function copiarLista(){
 
-let recomendacoes=`
+function mostrar(lista){
+
+document.getElementById("scanner").style.display="none"
+
+document.getElementById("preview").style.filter="brightness(1)"
+
+let div=document.getElementById("resultado")
+
+div.innerHTML=""
+
+textoCopiar=""
+
+lista.forEach(l=>{
+
+div.innerHTML+=l+"<br>"
+
+textoCopiar+=l+"\n"
+
+})
+
+textoCopiar+=`
 
 RECOMENDAÇÕES
 
@@ -366,15 +341,20 @@ RECOMENDAÇÕES
 • NÃO entrar após sair branco ⚪
 `
 
-let textoFinal=window.listaCopiar+"\n"+recomendacoes
+}
 
-navigator.clipboard.writeText(textoFinal)
 
-alert("Lista e recomendações copiadas!")
+// COPIAR
+
+document.getElementById("copiarBtn").onclick=function(){
+
+navigator.clipboard.writeText(textoCopiar)
+
+alert("Lista copiada com recomendações!")
 
 }
 
 </script>
 
 </body>
-    </html>
+</html>
