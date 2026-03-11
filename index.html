@@ -164,8 +164,8 @@ z-index:-1;
 
 <br><br>
 
-• Entrar até G1
-• Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)
+• Entrar até G1<br>
+• Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)<br>
 • NÃO entrar após sair branco ⚪
 
 </div>
@@ -180,8 +180,6 @@ z-index:-1;
 
 let imagemCarregada=null
 let textoCopiar=""
-
-// MATRIX
 
 const canvas=document.getElementById("matrix")
 const ctx=canvas.getContext("2d")
@@ -225,9 +223,6 @@ drops[i]++
 
 setInterval(draw,35)
 
-
-// CARREGAR PRINT
-
 document.getElementById("upload").addEventListener("change",function(e){
 
 let file=e.target.files[0]
@@ -250,17 +245,11 @@ reader.readAsDataURL(file)
 
 })
 
-
-// ANALISAR
-
 document.getElementById("analisarBtn").onclick=function(){
 
 if(!imagemCarregada){
-
 alert("Envie uma imagem")
-
 return
-
 }
 
 document.getElementById("scanner").style.display="block"
@@ -287,36 +276,40 @@ processarImagem()
 
 }
 
-
 function processarImagem(){
 
 let sinais=[]
 let agora=new Date()
 
-// tendência baseada na hora
-let tendencia = Math.random() > 0.5 ? "⚫" : "🔴"
+// porcentagem exemplo (simulando leitura do print)
+let porcentagemPreto = 0.60
+let porcentagemVermelho = 0.40
 
-for(let i=0;i<10;i++){
+let totalSinais = 10
+
+let qtdPreto = Math.round(totalSinais * porcentagemPreto)
+let qtdVermelho = totalSinais - qtdPreto
+
+let cores=[]
+
+for(let i=0;i<qtdPreto;i++){
+cores.push("⚫")
+}
+
+for(let i=0;i<qtdVermelho;i++){
+cores.push("🔴")
+}
+
+cores.sort(()=>Math.random()-0.5)
+
+for(let i=0;i<totalSinais;i++){
 
 agora.setMinutes(agora.getMinutes()+3)
 
 let h=agora.getHours().toString().padStart(2,'0')
 let m=agora.getMinutes().toString().padStart(2,'0')
 
-let cor
-
-// mantém proporção (mais da tendência)
-if(Math.random()<0.65){
-
-cor=tendencia
-
-}else{
-
-cor=tendencia==="⚫"?"🔴":"⚫"
-
-}
-
-sinais.push(`${h}:${m} ${cor}+⚪`)
+sinais.push(`${h}:${m} ${cores[i]}+⚪`)
 
 }
 
@@ -324,11 +317,9 @@ mostrar(sinais)
 
 }
 
-
 function mostrar(lista){
 
 document.getElementById("scanner").style.display="none"
-
 document.getElementById("preview").style.filter="brightness(1)"
 
 let div=document.getElementById("resultado")
@@ -340,7 +331,6 @@ textoCopiar=""
 lista.forEach(l=>{
 
 div.innerHTML+=l+"<br>"
-
 textoCopiar+=l+"\n"
 
 })
@@ -355,9 +345,6 @@ RECOMENDAÇÕES
 `
 
 }
-
-
-// COPIAR
 
 document.getElementById("copiarBtn").onclick=function(){
 
