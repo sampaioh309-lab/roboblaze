@@ -14,15 +14,18 @@ body {
     color: #fff;
     text-align: center;
     padding: 20px;
+    font-size: 18px;
 }
 
 h2 {
     color: #22c55e;
     text-shadow: 0 0 10px #22c55e;
+    font-size: 24px;
 }
 
 .container {
-    max-width: 500px;
+    max-width: 650px;
+    width: 95%;
     margin: auto;
     background: #020617;
     padding: 20px;
@@ -32,7 +35,7 @@ h2 {
 
 input {
     margin-top: 10px;
-    padding: 10px;
+    padding: 12px;
     border-radius: 10px;
     border: none;
     background: #111827;
@@ -41,7 +44,8 @@ input {
 }
 
 img, canvas {
-    max-width: 100%;
+    width: 100%;
+    height: auto;
     margin-top: 10px;
     border-radius: 10px;
     border: 2px solid #1f2937;
@@ -49,7 +53,7 @@ img, canvas {
 
 .card {
     background: #111827;
-    padding: 12px;
+    padding: 14px;
     margin-top: 10px;
     border-radius: 10px;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
@@ -61,7 +65,7 @@ img, canvas {
 }
 
 .resultado {
-    font-size: 18px;
+    font-size: 20px;
     margin-top: 10px;
 }
 
@@ -71,6 +75,7 @@ img, canvas {
     font-family: monospace;
     margin-top: 10px;
     color: #22c55e;
+    font-size: 18px;
 }
 
 /* BARRA */
@@ -83,12 +88,12 @@ img, canvas {
 }
 
 .barra {
-    height: 22px;
+    height: 24px;
     width: 0%;
     background: linear-gradient(90deg, #22c55e, #4ade80);
     text-align: center;
-    line-height: 22px;
-    font-size: 12px;
+    line-height: 24px;
+    font-size: 13px;
     position: relative;
     overflow: hidden;
 }
@@ -107,6 +112,19 @@ img, canvas {
 @keyframes brilho {
     0% { left: -50%; }
     100% { left: 120%; }
+}
+
+button {
+    margin-top:10px;
+    padding:12px;
+    width:100%;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:#000;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:16px;
 }
 
 </style>
@@ -131,33 +149,29 @@ img, canvas {
 
 <div class="card lista" id="lista"></div>
 
-<!-- RECOMENDAÇÕES -->
 <div class="card" id="recomendacoes">
 <b>📋 RECOMENDAÇÕES</b><br><br>
-
 • Entrar até G1<br>
 • Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)<br>
 • NÃO entrar após sair branco ⚪
-
 </div>
 
-<!-- BOTÃO COPIAR -->
-<button id="copiarBtn" style="
-margin-top:10px;
-padding:10px;
-width:100%;
-border:none;
-border-radius:10px;
-background:#22c55e;
-color:#000;
-font-weight:bold;
-cursor:pointer;
-">
-📋 Copiar Sinais
-</button>
+<button id="copiarBtn">📋 Copiar Sinais</button>
 
 <div class="barra-box">
     <div class="barra" id="barra">0%</div>
+</div>
+
+<!-- ASSINATURA -->
+<div style="
+margin-top:15px;
+font-size:14px;
+color:#94a3b8;
+opacity:0.8;
+">
+Desenvolvido por<br>
+<b style="color:#22c55e;">Henrique Sampaio</b><br>
+<span style="font-size:12px;">Desenvolvedor</span>
 </div>
 
 </div>
@@ -249,10 +263,16 @@ document.getElementById("upload").addEventListener("change", function(e){
         let canvas = document.getElementById("canvas");
         let ctx = canvas.getContext("2d");
 
-        canvas.width = image.width * 2;
-        canvas.height = image.height * 2;
+        let scale = window.devicePixelRatio || 2;
 
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        canvas.width = image.width * scale;
+        canvas.height = image.height * scale;
+
+        canvas.style.width = image.width + "px";
+        canvas.style.height = image.height + "px";
+
+        ctx.scale(scale, scale);
+        ctx.drawImage(image, 0, 0);
 
         let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
         let data = imgData.data;
@@ -274,7 +294,6 @@ document.getElementById("upload").addEventListener("change", function(e){
             logger: m => {
                 if (m.status === "recognizing text") {
                     let progresso = Math.round(m.progress * 100);
-
                     barra.style.width = progresso + "%";
                     barra.innerText = progresso + "%";
                 }
