@@ -1,106 +1,112 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>SHARKBOT AI</title>
+<title>Robô Double PRO</title>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
 <style>
 
-body{
-margin:0;
-background:#000;
-color:white;
-font-family:Arial;
-text-align:center;
+body {
+    font-family: Arial;
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color: #fff;
+    text-align: center;
+    padding: 20px;
 }
 
-.container{
-max-width:900px;
-margin:auto;
-padding:40px;
+h2 {
+    color: #22c55e;
+    text-shadow: 0 0 10px #22c55e;
 }
 
-h1{
-color:#00ffff;
-font-size:48px;
+.container {
+    max-width: 500px;
+    margin: auto;
+    background: #020617;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
 }
 
-#assinatura{
-color:#00ffffaa;
-margin-bottom:20px;
+input {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #111827;
+    color: #fff;
+    cursor: pointer;
 }
 
-button{
-padding:14px 24px;
-font-size:18px;
-background:#00ffff;
-border:none;
-border-radius:10px;
-cursor:pointer;
-margin-top:20px;
+img, canvas {
+    max-width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 2px solid #1f2937;
 }
 
-#previewBox{
-position:relative;
-display:inline-block;
+.card {
+    background: #111827;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
 
-#preview{
-max-width:600px;
-width:100%;
-border-radius:10px;
-border:2px solid #00ffff44;
+.status {
+    font-weight: bold;
+    color: #38bdf8;
 }
 
-#scan{
-position:absolute;
-left:0;
-width:100%;
-height:4px;
-background:#00ffff;
-box-shadow:0 0 20px #00ffff;
-animation:scan 2s linear infinite;
-display:none;
+.resultado {
+    font-size: 18px;
+    margin-top: 10px;
 }
 
-@keyframes scan{
-0%{top:0}
-50%{top:100%}
-100%{top:0}
+.lista {
+    text-align: left;
+    white-space: pre-line;
+    font-family: monospace;
+    margin-top: 10px;
+    color: #22c55e;
 }
 
-#barra{
-width:100%;
-height:22px;
-background:#111;
-border-radius:10px;
-margin-top:20px;
-overflow:hidden;
-display:none;
+/* BARRA */
+.barra-box {
+    width: 100%;
+    background: #1f2937;
+    border-radius: 10px;
+    margin-top: 15px;
+    overflow: hidden;
 }
 
-#progresso{
-height:100%;
-width:0%;
-background:#00ffff;
-color:black;
-font-weight:bold;
-line-height:22px;
+.barra {
+    height: 22px;
+    width: 0%;
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+    text-align: center;
+    line-height: 22px;
+    font-size: 12px;
+    position: relative;
+    overflow: hidden;
 }
 
-#resultado{
-margin-top:30px;
-font-size:22px;
-line-height:36px;
+.barra::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 50%;
+    height: 100%;
+    background: rgba(255,255,255,0.2);
+    animation: brilho 2s infinite;
 }
 
-canvas{
-position:fixed;
-top:0;
-left:0;
-z-index:-1;
+@keyframes brilho {
+    0% { left: -50%; }
+    100% { left: 120%; }
 }
 
 </style>
@@ -108,260 +114,233 @@ z-index:-1;
 
 <body>
 
-<canvas id="matrix"></canvas>
-
 <div class="container">
 
-<h1>SHARKBOT AI</h1>
-<div id="assinatura">Developed by Henrique Sampaio</div>
+<h2>🤖 Robô Double PRO</h2>
 
 <input type="file" id="upload">
 
-<br><br>
-
-<div id="previewBox">
 <img id="preview">
-<div id="scan"></div>
+<canvas id="canvas"></canvas>
+
+<div class="card status" id="status">Aguardando imagem...</div>
+
+<div class="card resultado" id="texto"></div>
+
+<div class="card resultado" id="porcentagem"></div>
+
+<div class="card lista" id="lista"></div>
+
+<!-- RECOMENDAÇÕES -->
+<div class="card" id="recomendacoes">
+<b>📋 RECOMENDAÇÕES</b><br><br>
+
+• Entrar até G1<br>
+• Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)<br>
+• NÃO entrar após sair branco ⚪
+
 </div>
 
-<div id="barra">
-<div id="progresso">0%</div>
+<!-- BOTÃO COPIAR -->
+<button id="copiarBtn" style="
+margin-top:10px;
+padding:10px;
+width:100%;
+border:none;
+border-radius:10px;
+background:#22c55e;
+color:#000;
+font-weight:bold;
+cursor:pointer;
+">
+📋 Copiar Sinais
+</button>
+
+<div class="barra-box">
+    <div class="barra" id="barra">0%</div>
 </div>
-
-<br>
-
-<button onclick="analisar()">ANALISAR HISTÓRICO</button>
-
-<div id="resultado"></div>
-
-<br>
-
-<button onclick="copiar()">COPIAR LISTA</button>
 
 </div>
 
 <script>
 
-/* MATRIX */
-
-const canvas=document.getElementById("matrix")
-const ctx=canvas.getContext("2d")
-
-canvas.height=window.innerHeight
-canvas.width=window.innerWidth
-
-const letters="01"
-const fontSize=14
-const columns=canvas.width/fontSize
-
-const drops=[]
-
-for(let x=0;x<columns;x++)
-drops[x]=1
-
-function drawMatrix(){
-
-ctx.fillStyle="rgba(0,0,0,0.05)"
-ctx.fillRect(0,0,canvas.width,canvas.height)
-
-ctx.fillStyle="#0F0"
-ctx.font=fontSize+"px monospace"
-
-for(let i=0;i<drops.length;i++){
-
-let text=letters[Math.floor(Math.random()*letters.length)]
-
-ctx.fillText(text,i*fontSize,drops[i]*fontSize)
-
-if(drops[i]*fontSize>canvas.height && Math.random()>0.975)
-drops[i]=0
-
-drops[i]++
-
+// 🔧 normalizar número
+function normalizar(v){
+    if(v > 100) v = v / 10;
+    return v;
 }
 
+// 🎯 gerar cores
+function gerarCores(preto, vermelho){
+    let total = preto + vermelho;
+
+    let qV = Math.round((vermelho / total) * 10);
+    let qP = 10 - qV;
+
+    let cores = [];
+    let maior = vermelho >= preto ? "🔴" : "⚫";
+
+    let v=0, p=0;
+
+    while(cores.length < 10){
+        if(maior === "🔴"){
+            if(v < qV){ cores.push("🔴"); v++; }
+            if(p < qP){ cores.push("⚫"); p++; }
+        } else {
+            if(p < qP){ cores.push("⚫"); p++; }
+            if(v < qV){ cores.push("🔴"); v++; }
+        }
+    }
+
+    return cores.slice(0,10);
 }
 
-setInterval(drawMatrix,33)
+// ⏱️ lista
+function gerarLista(preto, vermelho){
+    let cores = gerarCores(preto, vermelho);
 
-/* BOT */
+    let agora = new Date();
+    let h = agora.getHours();
+    let m = agora.getMinutes();
 
-let imagem=null
-let listaCopiar=""
+    let lista = "";
 
-upload.addEventListener("change",function(e){
+    for(let i=0;i<cores.length;i++){
+        m += 3;
+        if(m >= 60){ m -= 60; h++; }
 
-let file=e.target.files[0]
+        let mm = m.toString().padStart(2,'0');
+        lista += `${h}:${mm} → ${cores[i]}+⚪️\n`;
+    }
 
-let reader=new FileReader()
-
-reader.onload=function(event){
-
-preview.src=event.target.result
-
-let img=new Image()
-
-img.src=event.target.result
-
-img.onload=function(){
-
-imagem=img
-
+    return lista;
 }
 
+// 🔊 som
+function tocarSom(){
+    let audio = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
+    audio.play();
 }
 
-reader.readAsDataURL(file)
-
-})
-
-async function analisar(){
-
-if(!imagem){
-
-alert("Envie um print")
-
-return
-
+// 📳 vibração
+function vibrar(){
+    if(navigator.vibrate){
+        navigator.vibrate(300);
+    }
 }
 
-scan.style.display="block"
-barra.style.display="block"
+// 📸 upload
+document.getElementById("upload").addEventListener("change", function(e){
 
-let progressoAtual=0
+    const file = e.target.files[0];
+    if(!file) return;
 
-let barraAnim=setInterval(()=>{
+    let barra = document.getElementById("barra");
+    barra.style.width = "0%";
+    barra.innerText = "0%";
 
-progressoAtual++
+    let img = document.getElementById("preview");
+    img.src = URL.createObjectURL(file);
 
-progresso.style.width=progressoAtual+"%"
-progresso.innerText=progressoAtual+"%"
+    let image = new Image();
 
-if(progressoAtual>=100){
+    image.onload = function(){
 
-clearInterval(barraAnim)
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext("2d");
 
-}
+        canvas.width = image.width * 2;
+        canvas.height = image.height * 2;
 
-},40)
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-const worker=await Tesseract.createWorker()
+        let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+        let data = imgData.data;
 
-await worker.loadLanguage("eng")
-await worker.initialize("eng")
+        for(let i=0; i<data.length; i+=4){
+            let media = (data[i] + data[i+1] + data[i+2]) / 3;
+            let cor = media > 140 ? 255 : 0;
 
-const {data}=await worker.recognize(imagem)
+            data[i] = cor;
+            data[i+1] = cor;
+            data[i+2] = cor;
+        }
 
-await worker.terminate()
+        ctx.putImageData(imgData,0,0);
 
-scan.style.display="none"
+        document.getElementById("status").innerText = "🧠 Analisando padrão...";
 
-let texto=data.text
+        Tesseract.recognize(canvas, 'eng', {
+            logger: m => {
+                if (m.status === "recognizing text") {
+                    let progresso = Math.round(m.progress * 100);
 
-let numeros=texto.match(/\d+(\.\d+)?/g)
+                    barra.style.width = progresso + "%";
+                    barra.innerText = progresso + "%";
+                }
+            }
+        }).then(({ data: { text } }) => {
 
-if(!numeros){
+            document.getElementById("texto").innerText = "Texto:\n" + text;
 
-gerarLista(50,50)
-return
+            let porcentagens = text.match(/\d+(\.\d+)?(?=\s*%)/g);
 
-}
+            if (!porcentagens || porcentagens.length < 2) {
+                document.getElementById("status").innerText = "❌ Não achou %";
+                return;
+            }
 
-let porcentagens=[]
+            let preto = normalizar(parseFloat(porcentagens[0]));
+            let vermelho = normalizar(parseFloat(porcentagens[1]));
+            let branco = porcentagens[2] ? normalizar(parseFloat(porcentagens[2])) : 0;
 
-numeros.forEach(n=>{
+            document.getElementById("porcentagem").innerText =
+                `⚫ ${preto}% | 🔴 ${vermelho}% | ⚪ ${branco}%`;
 
-let valor=parseFloat(n)
+            let lista = gerarLista(preto, vermelho);
 
-if(valor>=1 && valor<=100){
+            document.getElementById("status").innerText = "✅ Sinais prontos";
+            document.getElementById("lista").innerText = lista;
 
-porcentagens.push(valor)
+            tocarSom();
+            vibrar();
 
-}
+        });
 
-})
+    }
 
-if(porcentagens.length<2){
+    image.src = URL.createObjectURL(file);
 
-gerarLista(50,50)
-return
+});
 
-}
+// 📋 copiar
+document.getElementById("copiarBtn").addEventListener("click", function(){
 
-let preto=porcentagens[0]
-let vermelho=porcentagens[1]
+    let lista = document.getElementById("lista").innerText;
 
-gerarLista(vermelho,preto)
+    let recomendacoes = `
 
-}
+📋 RECOMENDAÇÕES
 
-function gerarLista(v,p){
+• Entrar até G1
+• Evitar sequência de 4 iguais (🔴🔴🔴🔴 ou ⚫⚫⚫⚫)
+• NÃO entrar após sair branco ⚪
+`;
 
-let total=v+p
+    let textoFinal = lista + "\n" + recomendacoes;
 
-let qPreto=Math.round((p/total)*10)
-let qVermelho=10-qPreto
+    navigator.clipboard.writeText(textoFinal).then(() => {
 
-let cores=[]
+        let botao = document.getElementById("copiarBtn");
+        botao.innerText = "✅ Copiado!";
+        
+        setTimeout(() => {
+            botao.innerText = "📋 Copiar Sinais";
+        }, 2000);
 
-for(let i=0;i<qPreto;i++) cores.push("⚫")
-for(let i=0;i<qVermelho;i++) cores.push("🔴")
+    });
 
-cores.sort(()=>Math.random()-0.5)
-
-let agora=new Date()
-
-let lista=[]
-
-for(let i=0;i<10;i++){
-
-agora.setMinutes(agora.getMinutes()+3)
-
-let h=agora.getHours().toString().padStart(2,"0")
-let m=agora.getMinutes().toString().padStart(2,"0")
-
-lista.push(`${h}:${m} ${cores[i]} +⚪`)
-
-}
-
-mostrar(lista)
-
-}
-
-function mostrar(lista){
-
-resultado.innerHTML=""
-listaCopiar=""
-
-lista.forEach(l=>{
-
-resultado.innerHTML+=l+"<br>"
-listaCopiar+=l+"\n"
-
-})
-
-let rec=`
-
-RECOMENDAÇÕES
-
-• Entrada até G1
-• Evitar 4 cores seguidas
-• Não entrar após branco ⚪
-`
-
-resultado.innerHTML+="<br>"+rec.replace(/\n/g,"<br>")
-
-listaCopiar+=rec
-
-}
-
-function copiar(){
-
-navigator.clipboard.writeText(listaCopiar)
-
-alert("Lista copiada!")
-
-}
+});
 
 </script>
 
