@@ -113,7 +113,6 @@ function normalizar(v){
 function gerarCores(preto, vermelho){
     let total = preto + vermelho;
     let proporcaoV = vermelho / total;
-    let proporcaoP = preto / total;
     let cores = [];
 
     for(let i=0;i<10;i++){
@@ -144,7 +143,7 @@ function gerarLista(preto, vermelho){
     return lista;
 }
 
-// ================= AGENDAR SINAIS =================
+// ================= AGENDAR SINAIS (ATUALIZADO) =================
 
 function agendarSinais(lista){
 
@@ -164,11 +163,19 @@ function agendarSinais(lista){
         let dataAlvo = new Date();
         dataAlvo.setHours(h, m, 0, 0);
 
+        // 🔥 1 MINUTO ANTES
+        dataAlvo.setMinutes(dataAlvo.getMinutes() - 1);
+
         let delay = dataAlvo - agora;
 
-        if(delay > 0){
+        let horaFormatada = horario.replace(":", ": ");
+
+        // 🚀 ENVIA MESMO SE JÁ PASSOU
+        if(delay <= 0){
+            enviarNotificacao(`${horaFormatada} apostar ${sinal}`);
+        } else {
             setTimeout(() => {
-                enviarNotificacao(`Entrada: ${sinal}`);
+                enviarNotificacao(`${horaFormatada} apostar ${sinal}`);
             }, delay);
         }
 
@@ -261,7 +268,7 @@ document.getElementById("upload").addEventListener("change", function(e){
                 document.getElementById("lista").innerText = lista;
                 document.getElementById("status").innerText = "✅ Sinais prontos";
 
-                agendarSinais(lista); // 🔥 AQUI DISPARA AS NOTIFICAÇÕES
+                agendarSinais(lista); // 🔥 DISPARA NOTIFICAÇÕES
 
             });
 
