@@ -1,11 +1,17 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Robô Double PRO</title><script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script><style>
+<title>Robô Double PRO</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
+
+<style>
 *{box-sizing:border-box;margin:0;padding:0}
+
 body{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Arial;
     background: linear-gradient(135deg,#020617,#0f172a);
     color:#e2e8f0;
     display:flex;
@@ -20,60 +26,20 @@ body{
     background:#020617;
     border-radius:20px;
     padding:16px;
-    box-shadow:0 0 30px rgba(0,0,0,0.6);
     border:1px solid #1e293b;
 }
 
-h2{
-    text-align:center;
-    margin-bottom:10px;
-    color:#38bdf8;
-}
+h2{text-align:center;color:#38bdf8;margin-bottom:10px}
 
-input[type=file]{
-    width:100%;
-    margin:10px 0;
-    padding:8px;
-    background:#020617;
-    border:1px solid #334155;
-    border-radius:10px;
-    color:#fff;
-}
+input{width:100%;margin:10px 0;padding:8px;background:#020617;border:1px solid #334155;color:#fff;border-radius:10px}
 
-img,canvas{
-    width:100%;
-    margin-top:10px;
-    border-radius:12px;
-    border:1px solid #1e293b;
-}
+img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
-#barra{
-    width:100%;
-    height:16px;
-    background:#020617;
-    border:1px solid #334155;
-    margin:14px 0;
-    border-radius:20px;
-    overflow:hidden;
-}
+#barra{height:16px;background:#020617;border:1px solid #334155;border-radius:20px;overflow:hidden;margin-top:10px}
+#progresso{height:100%;width:0%;background:linear-gradient(90deg,#00f5ff,#00ff95)}
 
-#progresso{
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg,#00f5ff,#00ff95);
-    transition:width 0.3s;
-}
-
-#status{
-    text-align:center;
-    margin-top:6px;
-    color:#38bdf8;
-}
-
-#porcentagem{
-    margin-top:6px;
-    font-size:15px;
-}
+#status{text-align:center;margin-top:8px}
+#porcentagem{text-align:center;margin-top:5px}
 
 #lista{
     white-space:pre-line;
@@ -82,51 +48,63 @@ img,canvas{
     border:1px solid #334155;
     border-radius:12px;
     padding:10px;
-    font-size:14px;
 }
 
 button{
     width:100%;
     padding:12px;
-    margin-top:12px;
+    margin-top:10px;
     border:none;
     border-radius:12px;
-    font-size:15px;
-    font-weight:bold;
     background:linear-gradient(90deg,#00f5ff,#00ff95);
-    color:#020617;
+    color:#000;
+    font-weight:bold;
 }
+</style>
+</head>
 
-#recomendacoes{
-    margin-top:14px;
-    font-size:13px;
-    background:#020617;
-    border:1px solid #334155;
-    border-radius:12px;
-    padding:10px;
-    line-height:1.4;
-}
+<body>
 
-footer{
-    text-align:center;
-    margin-top:12px;
-    font-size:11px;
-    opacity:0.6;
-}
-</style></head><body>
-<div id="app"><h2>📸 Robô Double PRO</h2><input type="file" id="upload"><img id="preview">
-<canvas id="canvas"></canvas><div id="barra"><div id="progresso"></div></div><p id="status">Aguardando imagem...</p>
+<div id="app">
+
+<h2>📸 Robô Double PRO</h2>
+
+<input type="file" id="upload">
+<img id="preview">
+<canvas id="canvas"></canvas>
+
+<div id="barra"><div id="progresso"></div></div>
+
+<p id="status">Aguardando imagem...</p>
 <p id="porcentagem"></p>
-<div id="lista"></div><button onclick="copiarTudo()">📋 Copiar Lista + Recomendações</button>
 
-<div id="recomendacoes">
-<b>📋 RECOMENDAÇÕES</b><br><br>
-• Entrar até G1<br>
-• Evitar sequência de 4 iguais<br>
-• NÃO entrar após sair branco ⚪
-</div><footer>
-Henrique Sampaio<br>Desenvolvedor
-</footer></div><script>
+<div id="lista"></div>
+
+<button onclick="copiarTudo()">📋 Copiar Lista</button>
+
+</div>
+
+<script>
+
+// ================= NOTIFICAÇÃO =================
+
+function pedirPermissao(){
+    if(Notification.permission !== "granted"){
+        Notification.requestPermission();
+    }
+}
+
+function enviarNotificacao(texto){
+    if(Notification.permission === "granted"){
+        new Notification("🚨 SINAL DOUBLE", {
+            body: texto,
+            icon: "https://cdn-icons-png.flaticon.com/512/3522/3522092.png"
+        });
+    }
+}
+
+// ================= LÓGICA =================
+
 function normalizar(v){
     if(v > 100) v = v / 10;
     return v;
@@ -137,64 +115,100 @@ function gerarCores(preto, vermelho){
     let proporcaoV = vermelho / total;
     let proporcaoP = preto / total;
     let cores = [];
-    let acumuladoV = 0;
-    let acumuladoP = 0;
 
     for(let i=0;i<10;i++){
-        acumuladoV += proporcaoV;
-        acumuladoP += proporcaoP;
-        if(acumuladoV > acumuladoP){
-            cores.push("🔴");
-            acumuladoV -= 1;
-        } else {
-            cores.push("⚫");
-            acumuladoP -= 1;
-        }
+        cores.push(Math.random() < proporcaoV ? "🔴" : "⚫");
     }
+
     return cores;
 }
 
 function gerarLista(preto, vermelho){
     let cores = gerarCores(preto, vermelho);
-    cores = cores.map(c => c === "🔴" ? "⚫" : "🔴");
 
     let agora = new Date();
     let h = agora.getHours();
     let m = agora.getMinutes();
+
     let lista = "";
 
     for(let i=0;i<cores.length;i++){
         m += 3;
         if(m >= 60){ m -= 60; h++; }
+
         let mm = m.toString().padStart(2,'0');
+
         lista += `${h}:${mm} → ${cores[i]}+⚪️\n`;
     }
+
     return lista;
 }
+
+// ================= AGENDAR SINAIS =================
+
+function agendarSinais(lista){
+
+    let linhas = lista.split("\n");
+
+    linhas.forEach(linha => {
+
+        if(!linha) return;
+
+        let partes = linha.split(" → ");
+        let horario = partes[0];
+        let sinal = partes[1];
+
+        let agora = new Date();
+        let [h, m] = horario.split(":");
+
+        let dataAlvo = new Date();
+        dataAlvo.setHours(h, m, 0, 0);
+
+        let delay = dataAlvo - agora;
+
+        if(delay > 0){
+            setTimeout(() => {
+                enviarNotificacao(`Entrada: ${sinal}`);
+            }, delay);
+        }
+
+    });
+}
+
+// ================= BARRA =================
 
 function carregarBarra(callback){
     let progresso = document.getElementById("progresso");
     let valor = 0;
+
     let intervalo = setInterval(()=>{
-        valor += 5;
+        valor += 4;
         progresso.style.width = valor + "%";
+
         if(valor >= 100){
             clearInterval(intervalo);
             callback();
         }
-    }, 70);
+
+    }, 80);
 }
+
+// ================= COPIAR =================
 
 function copiarTudo(){
     let lista = document.getElementById("lista").innerText;
-    let rec = document.getElementById("recomendacoes").innerText;
-    navigator.clipboard.writeText(lista + "\n\n" + rec);
+    navigator.clipboard.writeText(lista);
     alert("Copiado!");
 }
 
+// ================= OCR =================
+
 document.getElementById("upload").addEventListener("change", function(e){
+
     const file = e.target.files[0];
     if(!file) return;
+
+    pedirPermissao();
 
     let img = document.getElementById("preview");
     img.src = URL.createObjectURL(file);
@@ -202,29 +216,35 @@ document.getElementById("upload").addEventListener("change", function(e){
     let image = new Image();
 
     image.onload = function(){
+
         let canvas = document.getElementById("canvas");
         let ctx = canvas.getContext("2d");
 
         canvas.width = image.width * 2;
         canvas.height = image.height * 2;
+
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
         let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
         let data = imgData.data;
 
         for(let i=0; i<data.length; i+=4){
-            let media = (data[i] + data[i+1] + data[i+2]) / 3;
+            let media = (data[i]+data[i+1]+data[i+2])/3;
             let cor = media > 140 ? 255 : 0;
             data[i]=data[i+1]=data[i+2]=cor;
         }
 
         ctx.putImageData(imgData,0,0);
+
         document.getElementById("status").innerText = "🔍 Lendo imagem...";
 
         carregarBarra(()=>{
+
             Tesseract.recognize(canvas, 'eng').then(({ data: { text } }) => {
+
                 let porcentagens = text.match(/\d+(\.\d+)?(?=\s*%)/g);
-                if (!porcentagens || porcentagens.length < 2) {
+
+                if (!porcentagens || porcentagens.length < 2){
                     document.getElementById("status").innerText = "❌ Não achou %";
                     return;
                 }
@@ -237,13 +257,23 @@ document.getElementById("upload").addEventListener("change", function(e){
                     `⚫ ${preto}% | 🔴 ${vermelho}% | ⚪ ${branco}%`;
 
                 let lista = gerarLista(preto, vermelho);
-                document.getElementById("status").innerText = "✅ Lista pronta";
+
                 document.getElementById("lista").innerText = lista;
+                document.getElementById("status").innerText = "✅ Sinais prontos";
+
+                agendarSinais(lista); // 🔥 AQUI DISPARA AS NOTIFICAÇÕES
+
             });
+
         });
-    }
+
+    };
 
     image.src = URL.createObjectURL(file);
+
 });
-</script></body>
+
+</script>
+
+</body>
 </html>
