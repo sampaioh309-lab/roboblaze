@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Robô Double PRO</title>
 
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#020617">
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
@@ -110,19 +109,22 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 let listaGlobal = "";
 let sinaisGlobais = [];
+let loopAtivo = false;
 
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
-// SERVICE WORKER
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+// PERMISSÃO NOTIFICAÇÃO
+if ("Notification" in window) {
+    Notification.requestPermission();
 }
 
-// VOZ
+// VOZ PROTEGIDA
 function falar(texto){
-    let msg = new SpeechSynthesisUtterance(texto);
-    msg.lang = "pt-BR";
-    speechSynthesis.speak(msg);
+    try{
+        let msg = new SpeechSynthesisUtterance(texto);
+        msg.lang = "pt-BR";
+        speechSynthesis.speak(msg);
+    }catch(e){}
 }
 
 // ALERTA
@@ -136,15 +138,12 @@ function alertar(texto){
 
     falar(texto);
 
-    navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification("🚨 ROBÔ DOUBLE", {
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("🚨 ROBÔ DOUBLE", {
             body: texto,
-            icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png",
-            requireInteraction: true,
-            vibrate: [300,200,300],
-            tag: "robo-double"
+            icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png"
         });
-    });
+    }
 
     document.getElementById("status").innerText = "🚨 " + texto;
 }
@@ -182,7 +181,7 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText=lista;
 }
 
-// CONTROLE AVANÇADO
+// ATIVAR
 function ativarSinais(){
 
     if(!listaGlobal){
@@ -222,6 +221,9 @@ function ativarSinais(){
 // LOOP PRINCIPAL
 function iniciarLoop(){
 
+    if(loopAtivo) return;
+    loopAtivo = true;
+
     setInterval(()=>{
 
         let agora = Date.now();
@@ -245,13 +247,13 @@ function iniciarLoop(){
 
             let diff = s.alvo - agora;
 
-            // 1 MINUTO ANTES
+            // 1 MINUTO
             if(diff <= 60000 && diff > 59000 && !s.aviso1){
                 alertar(`Falta 1 minuto! ${s.horario} apostar ${s.sinal}`);
                 s.aviso1 = true;
             }
 
-            // 10 SEGUNDOS ANTES
+            // 10 SEGUNDOS
             if(diff <= 10000 && diff > 9000 && !s.aviso2){
                 alertar(`ATENÇÃO! ${s.horario} apostar ${s.sinal}`);
                 s.aviso2 = true;
@@ -268,7 +270,7 @@ function copiarTudo(){
     alert("Copiado!");
 }
 
-// OCR (igual ao seu)
+// OCR
 function processarImagem(file){
 
     const reader=new FileReader();
