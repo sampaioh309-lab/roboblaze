@@ -146,9 +146,16 @@ function alertar(texto){
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 
-// 🔥 ABRE FORA DO APP (IMPORTANTE)
+// 💣 ABRE FORA DO APP (SOLUÇÃO REAL)
 function abrirBlaze(){
-    window.open("https://blaze.com", "_blank");
+
+    // tenta forçar Chrome
+    window.location.href = "intent://blaze.com/#Intent;scheme=https;package=com.android.chrome;end";
+
+    // fallback
+    setTimeout(()=>{
+        window.open("https://blaze.com", "_blank");
+    }, 500);
 }
 
 // LÓGICA
@@ -245,13 +252,11 @@ function iniciarLoop(){
 
             let diff = s.alvo - agora;
 
-            // 1 MINUTO
             if(diff <= 60000 && diff > 59000 && !s.aviso1){
                 alertar(`Falta 1 minuto! ${s.horario} apostar ${s.sinal}`);
                 s.aviso1 = true;
             }
 
-            // 10 SEGUNDOS
             if(diff <= 10000 && diff > 9000 && !s.aviso2){
                 alertar(`ATENÇÃO! ${s.horario} apostar ${s.sinal}`);
                 s.aviso2 = true;
