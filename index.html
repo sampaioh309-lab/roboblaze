@@ -146,16 +146,23 @@ function alertar(texto){
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 
-// 🔥 MODO TRADER (TELA DIVIDIDA)
+// 🔥 ABRIR BLAZE NO CHROME + DOUBLE + GUIA
 function abrirBlaze(){
 
-    // abre direto no DOUBLE
-    window.open("https://blaze.com/pt/games/double", "_blank");
+    const url = "https://blaze.com/pt/games/double";
 
-    // instrução automática
+    // força abrir no Chrome fora do app
+    window.location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
+
+    // fallback
+    setTimeout(()=>{
+        window.open(url, "_blank");
+    }, 1000);
+
+    // guia tela dividida
     setTimeout(()=>{
         alert(
-`📱 MODO TRADER ATIVADO
+`📱 MODO TRADER
 
 Agora faça tela dividida:
 
@@ -166,7 +173,7 @@ Agora faça tela dividida:
 
 🔥 Use Blaze + Robô juntos!`
         );
-    }, 800);
+    }, 1500);
 }
 
 // LÓGICA
@@ -349,4 +356,4 @@ fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 </script>
 
 </body>
-</html>
+    </html>
