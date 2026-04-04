@@ -46,9 +46,7 @@ button{
     font-weight:bold;
 }
 
-#blaze{
-    background:#facc15;
-}
+#blaze{background:#facc15;}
 
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
@@ -128,15 +126,27 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 let listaGlobal = "";
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
+// 🔔 PEDIR PERMISSÃO
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
 // ================= ALERTA =================
 function alertar(texto){
+
     audio.play().catch(()=>{});
     if(navigator.vibrate) navigator.vibrate([300,200,300,600]);
 
-    document.body.style.background="#7f1d1d";
-    setTimeout(()=>{document.body.style.background=""},1000);
+    // 🔔 NOTIFICAÇÃO REAL
+    if(Notification.permission === "granted"){
+        new Notification("🚨 ROBÔ DOUBLE", {
+            body: texto,
+            icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png"
+        });
+    }
 
-    alert("🚨 "+texto);
+    // mensagem dentro do app
+    document.getElementById("status").innerText = "🚨 " + texto;
 }
 
 // ================= BOTÕES =================
@@ -209,12 +219,13 @@ function agendarSinais(lista){
         let alvo=new Date();
         alvo.setHours(h,m,0,0);
 
+        // 🔥 ALERTA 1 MINUTO ANTES
         let aviso=new Date(alvo.getTime()-60000);
         let delay=aviso-new Date();
 
         if(i===0) iniciarContador(h,m);
 
-        let texto=`${horario} apostar ${sinal}`;
+        let texto=`Às ${horario} apostar no ${sinal}`;
 
         if(delay<=0){
             alertar(texto);
