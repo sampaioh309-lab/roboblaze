@@ -115,7 +115,7 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <button id="blaze" onclick="abrirBlaze()">🎰 Abrir Blaze (Modo Trader)</button>
 
 <div class="dica">
-📱 Modo PRO: Use tela dividida com a Blaze para operar mais rápido
+📱 Use tela dividida com a Blaze para operar mais rápido
 </div>
 
 </div>
@@ -146,37 +146,44 @@ function alertar(texto){
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 
-// 🔥 ABRIR BLAZE NO CHROME + DOUBLE + GUIA
+// 🔥 ABRIR BLAZE (VERSÃO MAIS FORTE)
 function abrirBlaze(){
 
     const url = "https://blaze.com/pt/games/double";
 
-    // força abrir no Chrome fora do app
-    window.location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
+    // 1️⃣ FORÇA CHROME
+    window.location.href = "intent://blaze.com/pt/games/double#Intent;scheme=https;package=com.android.chrome;end";
 
-    // fallback
+    // 2️⃣ BACKUP
     setTimeout(()=>{
         window.open(url, "_blank");
-    }, 1000);
+    }, 800);
 
-    // guia tela dividida
+    // 3️⃣ GARANTIA FINAL
+    setTimeout(()=>{
+        window.location.href = url;
+    }, 1800);
+
+    // GUIA
     setTimeout(()=>{
         alert(
 `📱 MODO TRADER
 
-Agora faça tela dividida:
+Se não abriu no Chrome:
 
-1️⃣ Aperte o botão de apps recentes
-2️⃣ Segure no Chrome
-3️⃣ Clique em "Tela dividida"
-4️⃣ Escolha o Robô
+1️⃣ Defina Chrome como padrão
+2️⃣ Abra novamente
 
-🔥 Use Blaze + Robô juntos!`
+Depois:
+
+👉 Use tela dividida (apps recentes)
+
+🔥 Blaze + Robô juntos`
         );
-    }, 1500);
+    }, 2500);
 }
 
-// LÓGICA
+// RESTO DO SEU CÓDIGO (INALTERADO)
 function normalizar(v){if(v>100)v=v/10;return v;}
 
 function gerarCores(p,v){
@@ -204,7 +211,6 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText=lista;
 }
 
-// ATIVAR
 function ativarSinais(){
 
     if(!listaGlobal){
@@ -239,7 +245,6 @@ function ativarSinais(){
     document.getElementById("status").innerText = "🚀 Sinais ativados!";
 }
 
-// LOOP
 function iniciarLoop(){
 
     if(loopAtivo) return;
@@ -282,13 +287,11 @@ function iniciarLoop(){
     }, 500);
 }
 
-// COPIAR
 function copiarTudo(){
     navigator.clipboard.writeText(listaGlobal);
     alert("Copiado!");
 }
 
-// OCR
 function processarImagem(file){
 
     const reader=new FileReader();
@@ -356,4 +359,4 @@ fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 </script>
 
 </body>
-    </html>
+</html>
