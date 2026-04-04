@@ -6,8 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Robô Double PRO</title>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
@@ -15,15 +13,13 @@ body{
     font-family: Arial;
     background:#ffffff;
     color:#000;
-    margin:0;
     padding:10px;
-    overflow-y:auto;
 }
 
 #app{
     width:95%;
     max-width:420px;
-    margin:0 auto;
+    margin:auto;
     background:#fff;
     border-radius:20px;
     padding:16px;
@@ -44,33 +40,15 @@ h2{text-align:center;margin-bottom:10px}
     cursor:pointer;
 }
 
-.botao:active{
-    transform:scale(0.98);
-}
-
 img,canvas{
     width:100%;
     margin-top:10px;
-    border-radius:12px
-}
-
-#barra{
-    height:16px;
-    border:1px solid #ccc;
-    border-radius:20px;
-    overflow:hidden;
-    margin-top:10px
-}
-
-#progresso{
-    height:100%;
-    width:0%;
-    background:#000
+    border-radius:12px;
 }
 
 #status,#porcentagem{
     text-align:center;
-    margin-top:8px
+    margin-top:8px;
 }
 
 #lista{
@@ -78,7 +56,7 @@ img,canvas{
     margin-top:10px;
     border:1px solid #ccc;
     padding:10px;
-    border-radius:12px
+    border-radius:12px;
 }
 </style>
 
@@ -96,14 +74,11 @@ img,canvas{
 <img id="preview">
 <canvas id="canvas"></canvas>
 
-<div id="barra"><div id="progresso"></div></div>
-
 <p id="status">Aguardando imagem...</p>
 <p id="porcentagem"></p>
 
 <div id="lista"></div>
 
-<!-- BOTÕES -->
 <div class="botao" onclick="copiarLista()">📋 Copiar Lista</div>
 <div class="botao" onclick="ativarSinais()">🚀 Ativar Sinais</div>
 <div class="botao" onclick="abrirBlaze()" style="background:#facc15">🌐 Abrir Blaze</div>
@@ -112,24 +87,7 @@ img,canvas{
 
 <script>
 
-let processando = false;
-
-// 🔄 ANIMAÇÃO
-function animarCarregamento(callback){
-    let p = document.getElementById("progresso");
-    let v = 0;
-
-    let i = setInterval(()=>{
-        v+=5;
-        p.style.width = v+"%";
-        if(v>=100){
-            clearInterval(i);
-            setTimeout(callback,300);
-        }
-    },60);
-}
-
-// 📋 GERAR LISTA
+// 📊 GERAR LISTA
 function gerarLista(p,v){
     let d=new Date();
     let h=d.getHours();
@@ -156,11 +114,8 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText = lista;
 }
 
-// 🧠 PROCESSAR IMAGEM (OCR)
+// 🧠 DETECTAR CORES (SUBSTITUI OCR)
 function processarImagem(file){
-
-    if(processando) return;
-    processando = true;
 
     const reader = new FileReader();
 
@@ -168,78 +123,60 @@ function processarImagem(file){
 
         const preview = document.getElementById("preview");
         const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
         const status = document.getElementById("status");
         const porcentagem = document.getElementById("porcentagem");
 
         preview.src = e.target.result;
 
-        let image = new Image();
+        let img = new Image();
 
-        image.onload = function(){
+        img.onload = function(){
 
-            let ctx = canvas.getContext("2d");
+            canvas.width = img.width;
+            canvas.height = img.height;
 
-            canvas.width = image.width;
-            canvas.height = image.height * 0.35;
-
-            ctx.drawImage(
-                image,
-                0,0,image.width,image.height*0.35,
-                0,0,canvas.width,canvas.height
-            );
+            ctx.drawImage(img,0,0);
 
             let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
             let data = imgData.data;
 
+            let vermelho = 0;
+            let preto = 0;
+
             for(let i=0;i<data.length;i+=4){
 
-                let media = (data[i]+data[i+1]+data[i+2])/3;
-                let cor = media > 180 ? 255 : 0;
+                let r = data[i];
+                let g = data[i+1];
+                let b = data[i+2];
 
-                data[i]=cor;
-                data[i+1]=cor;
-                data[i+2]=cor;
+                if(r > 150 && g < 80 && b < 80){
+                    vermelho++;
+                }
+
+                if(r < 50 && g < 50 && b < 50){
+                    preto++;
+                }
             }
 
-            ctx.putImageData(imgData,0,0);
+            let total = vermelho + preto;
 
-            status.innerText="🔄 Lendo porcentagem...";
+            if(total === 0){
+                status.innerText = "❌ Não detectou cores";
+                return;
+            }
 
-            animarCarregamento(()=>{
+            let p = Math.floor((preto/total)*100);
+            let v = Math.floor((vermelho/total)*100);
 
-                Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
+            porcentagem.innerText = `⚫ ${p}% | 🔴 ${v}%`;
 
-                    let nums = text.match(/\d+(\.\d+)?(?=\s*%)/g) || [];
-                    nums = nums.map(n => parseFloat(n));
+            gerarLista(p,v);
 
-                    let p = nums[0];
-                    let v = nums[1];
-
-                    if(!p || !v){
-                        status.innerText = "❌ Não detectou porcentagem";
-                        processando = false;
-                        return;
-                    }
-
-                    if(p > 100 || v > 100){
-                        status.innerText = "❌ Valor inválido";
-                        processando = false;
-                        return;
-                    }
-
-                    porcentagem.innerText = `⚫ ${p}% | 🔴 ${v}%`;
-
-                    gerarLista(p,v);
-
-                    status.innerText="✅ Lista gerada";
-                    processando = false;
-                });
-
-            });
-
+            status.innerText = "✅ Detectado com sucesso";
         };
 
-        image.src = e.target.result;
+        img.src = e.target.result;
     };
 
     reader.readAsDataURL(file);
