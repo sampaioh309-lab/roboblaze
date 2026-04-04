@@ -50,10 +50,29 @@ button{
 
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
-#status{text-align:center;margin-top:8px}
-#porcentagem{text-align:center;margin-top:5px}
-#contador{text-align:center;margin-top:10px;color:#facc15}
-#lista{white-space:pre-line;margin-top:10px;border:1px solid #334155;padding:10px;border-radius:12px}
+#status,#porcentagem,#contador{
+    text-align:center;
+    margin-top:8px;
+}
+
+#proximo{
+    margin-top:10px;
+    padding:10px;
+    border-radius:12px;
+    background:#0f172a;
+    border:1px solid #334155;
+    text-align:center;
+    font-size:18px;
+    color:#facc15;
+}
+
+#lista{
+    white-space:pre-line;
+    margin-top:10px;
+    border:1px solid #334155;
+    padding:10px;
+    border-radius:12px
+}
 </style>
 
 </head>
@@ -75,6 +94,8 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <p id="status">Aguardando imagem...</p>
 <p id="porcentagem"></p>
+
+<div id="proximo">⏳ Aguardando sinais...</div>
 <p id="contador"></p>
 
 <div id="lista"></div>
@@ -88,36 +109,52 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <script>
 
 let listaGlobal = "";
+let sinaisGlobais = [];
+
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
-// 🔥 SERVICE WORKER
+// SERVICE WORKER
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
 
-// ================= ALERTA =================
+// VOZ
+function falar(texto){
+    let msg = new SpeechSynthesisUtterance(texto);
+    msg.lang = "pt-BR";
+    speechSynthesis.speak(msg);
+}
+
+// ALERTA
 function alertar(texto){
 
     audio.play().catch(()=>{});
-    if(navigator.vibrate) navigator.vibrate([300,200,300,600]);
+
+    if(navigator.vibrate){
+        navigator.vibrate([300,200,300,600]);
+    }
+
+    falar(texto);
 
     navigator.serviceWorker.ready.then(reg => {
         reg.showNotification("🚨 ROBÔ DOUBLE", {
             body: texto,
             icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png",
-            vibrate: [300,200,300]
+            requireInteraction: true,
+            vibrate: [300,200,300],
+            tag: "robo-double"
         });
     });
 
     document.getElementById("status").innerText = "🚨 " + texto;
 }
 
-// ================= BOTÕES =================
+// BOTÕES
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 function abrirBlaze(){window.location.href="https://blaze.com";}
 
-// ================= LÓGICA =================
+// LÓGICA
 function normalizar(v){if(v>100)v=v/10;return v;}
 
 function gerarCores(p,v){
@@ -145,76 +182,93 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText=lista;
 }
 
-// ================= CONTADOR =================
-function iniciarContador(h,m){
-    let alvo=new Date();
-    alvo.setHours(h,m,0,0);
-
-    setInterval(()=>{
-        let diff=alvo-new Date();
-        if(diff<=0) return;
-
-        let min=Math.floor(diff/60000);
-        let seg=Math.floor((diff%60000)/1000);
-
-        document.getElementById("contador").innerText =
-        `⏳ Próximo sinal em ${min}m ${seg}s`;
-    },1000);
-}
-
-// ================= AGENDAR =================
-function agendarSinais(lista){
-
-    let linhas = lista.split("\n");
-
-    linhas.forEach((linha,i)=>{
-
-        if(!linha) return;
-
-        let [horario,sinal] = linha.split(" → ");
-        let [h,m] = horario.split(":");
-
-        let agora = new Date();
-
-        let alvo = new Date();
-        alvo.setHours(h,m,0,0);
-
-        if(alvo < agora) return;
-
-        let aviso = new Date(alvo.getTime() - 60000);
-        let delay = aviso - agora;
-
-        let texto = `Às ${horario} apostar no ${sinal}`;
-
-        if(i===0) iniciarContador(h,m);
-
-        setTimeout(()=>{
-            alertar(texto);
-        }, delay);
-
-    });
-
-    document.getElementById("status").innerText = "🚀 Sinais ativados!";
-}
-
-// ================= ATIVAR =================
+// CONTROLE AVANÇADO
 function ativarSinais(){
+
     if(!listaGlobal){
         alert("Gere a lista primeiro!");
         return;
     }
 
-    agendarSinais(listaGlobal);
+    let linhas = listaGlobal.split("\n");
+    sinaisGlobais = [];
+
+    linhas.forEach(linha=>{
+
+        if(!linha) return;
+
+        let [horario,sinal] = linha.split(" → ");
+        let [h,m] = horario.split(":").map(Number);
+
+        let alvo = new Date();
+        alvo.setHours(h,m,0,0);
+
+        if(alvo < new Date()) return;
+
+        sinaisGlobais.push({
+            horario,
+            sinal,
+            alvo: alvo.getTime(),
+            aviso1:false,
+            aviso2:false
+        });
+
+    });
+
+    iniciarLoop();
+    document.getElementById("status").innerText = "🚀 Sinais ativados!";
 }
 
-// ================= COPIAR =================
+// LOOP PRINCIPAL
+function iniciarLoop(){
+
+    setInterval(()=>{
+
+        let agora = Date.now();
+
+        let proximo = sinaisGlobais.find(s => s.alvo > agora);
+
+        if(proximo){
+            let diff = proximo.alvo - agora;
+
+            let min = Math.floor(diff/60000);
+            let seg = Math.floor((diff%60000)/1000);
+
+            document.getElementById("contador").innerText =
+            `⏳ ${min}m ${seg}s`;
+
+            document.getElementById("proximo").innerText =
+            `🎯 Próximo: ${proximo.horario} → ${proximo.sinal}`;
+        }
+
+        sinaisGlobais.forEach(s=>{
+
+            let diff = s.alvo - agora;
+
+            // 1 MINUTO ANTES
+            if(diff <= 60000 && diff > 59000 && !s.aviso1){
+                alertar(`Falta 1 minuto! ${s.horario} apostar ${s.sinal}`);
+                s.aviso1 = true;
+            }
+
+            // 10 SEGUNDOS ANTES
+            if(diff <= 10000 && diff > 9000 && !s.aviso2){
+                alertar(`ATENÇÃO! ${s.horario} apostar ${s.sinal}`);
+                s.aviso2 = true;
+            }
+
+        });
+
+    }, 500);
+}
+
+// COPIAR
 function copiarTudo(){
-    let lista=document.getElementById("lista").innerText;
-    navigator.clipboard.writeText(lista);
+    navigator.clipboard.writeText(listaGlobal);
     alert("Copiado!");
 }
 
-// ================= OCR =================
+// OCR (igual ao seu)
 function processarImagem(file){
 
     const reader=new FileReader();
@@ -276,7 +330,6 @@ function processarImagem(file){
     reader.readAsDataURL(file);
 }
 
-// eventos
 cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 
