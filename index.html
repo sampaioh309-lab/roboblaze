@@ -50,36 +50,9 @@ button{
 
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
-#barra{height:16px;background:#020617;border:1px solid #334155;border-radius:20px;overflow:hidden;margin-top:10px}
-#progresso{height:100%;width:0%;background:linear-gradient(90deg,#00f5ff,#00ff95)}
-
 #status{text-align:center;margin-top:8px}
-#porcentagem{text-align:center;margin-top:5px}
-
-#contador{
-    text-align:center;
-    margin-top:10px;
-    font-size:18px;
-    color:#facc15;
-}
-
-#lista{
-    white-space:pre-line;
-    margin-top:10px;
-    background:#020617;
-    border:1px solid #334155;
-    border-radius:12px;
-    padding:10px;
-}
-
-#recomendacoes{
-    margin-top:10px;
-    font-size:13px;
-    background:#020617;
-    border:1px solid #334155;
-    border-radius:12px;
-    padding:10px;
-}
+#contador{text-align:center;margin-top:10px;color:#facc15}
+#lista{white-space:pre-line;margin-top:10px;border:1px solid #334155;padding:10px;border-radius:12px}
 </style>
 
 </head>
@@ -99,25 +72,14 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <img id="preview">
 <canvas id="canvas"></canvas>
 
-<div id="barra"><div id="progresso"></div></div>
-
 <p id="status">Aguardando imagem...</p>
-<p id="porcentagem"></p>
-
-<div id="contador"></div>
+<p id="contador"></p>
 
 <div id="lista"></div>
 
-<button onclick="copiarTudo()">📋 Copiar Lista</button>
 <button onclick="ativarSinais()">🚀 Ativar Sinais</button>
+<button onclick="testarNotificacao()">🧪 Testar Notificação</button>
 <button id="blaze" onclick="abrirBlaze()">🌐 Abrir Blaze</button>
-
-<div id="recomendacoes">
-<b>📋 RECOMENDAÇÕES</b><br><br>
-• Entrar até G1<br>
-• Evitar sequência de 4 iguais<br>
-• NÃO entrar após branco ⚪
-</div>
 
 </div>
 
@@ -126,9 +88,9 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 let listaGlobal = "";
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
-// 🔔 PEDIR PERMISSÃO
-if ("Notification" in window) {
-    Notification.requestPermission();
+// 🔥 REGISTRAR SERVICE WORKER
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
 }
 
 // ================= ALERTA =================
@@ -137,47 +99,41 @@ function alertar(texto){
     audio.play().catch(()=>{});
     if(navigator.vibrate) navigator.vibrate([300,200,300,600]);
 
-    // 🔔 NOTIFICAÇÃO REAL
-    if(Notification.permission === "granted"){
-        new Notification("🚨 ROBÔ DOUBLE", {
+    navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification("🚨 ROBÔ DOUBLE", {
             body: texto,
-            icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png"
+            icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png",
+            vibrate: [300,200,300]
         });
-    }
+    });
 
-    // mensagem dentro do app
     document.getElementById("status").innerText = "🚨 " + texto;
 }
 
-// ================= BOTÕES =================
-function abrirCamera(){document.getElementById("cameraInput").click();}
-function abrirGaleria(){document.getElementById("fileInput").click();}
-function abrirBlaze(){window.location.href="https://blaze.com";}
-
-// ================= LÓGICA =================
-function normalizar(v){if(v>100)v=v/10;return v;}
-
-function gerarCores(p,v){
-    let total=p+v;
-    let prob=v/total;
-    let cores=[];
-    for(let i=0;i<10;i++){
-        cores.push(Math.random()<prob?"🔴":"⚫");
-    }
-    return cores;
+// ================= TESTE =================
+function testarNotificacao(){
+    alertar("TESTE: apostar no ⚫️+⚪️ AGORA");
 }
 
-function gerarLista(p,v){
-    let cores=gerarCores(p,v);
+// ================= BOTÕES =================
+function abrirCamera(){cameraInput.click();}
+function abrirGaleria(){fileInput.click();}
+function abrirBlaze(){window.location.href="https://blaze.com";}
+
+// ================= GERAR LISTA =================
+function gerarLista(){
     let d=new Date();
     let h=d.getHours(),m=d.getMinutes();
     let lista="";
 
-    for(let i=0;i<cores.length;i++){
+    for(let i=0;i<5;i++){
         m+=3;if(m>=60){m-=60;h++;}
-        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cores[i]}+⚪️\n`;
+        let cor=Math.random()<0.5?"🔴":"⚫";
+        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
     }
-    return lista;
+
+    listaGlobal=lista;
+    document.getElementById("lista").innerText=lista;
 }
 
 // ================= CONTADOR =================
@@ -185,29 +141,26 @@ function iniciarContador(h,m){
     let alvo=new Date();
     alvo.setHours(h,m,0,0);
 
-    let intervalo=setInterval(()=>{
-        let agora=new Date();
-        let diff=alvo-agora;
-
-        if(diff<=0){
-            clearInterval(intervalo);
-            document.getElementById("contador").innerText="🚨 AGORA!";
-            return;
-        }
+    setInterval(()=>{
+        let diff=alvo-new Date();
+        if(diff<=0) return;
 
         let min=Math.floor(diff/60000);
         let seg=Math.floor((diff%60000)/1000);
 
         document.getElementById("contador").innerText =
-            `⏳ Próximo sinal em ${min}m ${seg}s`;
-
+        `⏳ ${min}m ${seg}s`;
     },1000);
 }
 
 // ================= AGENDAR =================
-function agendarSinais(lista){
+function ativarSinais(){
 
-    let linhas=lista.split("\n");
+    if(!listaGlobal){
+        gerarLista();
+    }
+
+    let linhas=listaGlobal.split("\n");
 
     linhas.forEach((linha,i)=>{
 
@@ -219,7 +172,6 @@ function agendarSinais(lista){
         let alvo=new Date();
         alvo.setHours(h,m,0,0);
 
-        // 🔥 ALERTA 1 MINUTO ANTES
         let aviso=new Date(alvo.getTime()-60000);
         let delay=aviso-new Date();
 
@@ -233,95 +185,9 @@ function agendarSinais(lista){
             setTimeout(()=>alertar(texto),delay);
         }
     });
-}
 
-// ================= COPIAR =================
-function copiarTudo(){
-    let lista=document.getElementById("lista").innerText;
-    let rec=document.getElementById("recomendacoes").innerText;
-    navigator.clipboard.writeText(lista+"\n\n"+rec);
-    alert("Copiado!");
-}
-
-// ================= ATIVAR =================
-function ativarSinais(){
-    if(!listaGlobal){
-        alert("Gere a lista primeiro!");
-        return;
-    }
     alert("🚀 Sinais ativados!");
-    agendarSinais(listaGlobal);
 }
-
-// ================= OCR =================
-function processarImagem(file){
-
-    const reader=new FileReader();
-
-    reader.onload=function(e){
-
-        preview.src=e.target.result;
-
-        let image=new Image();
-
-        image.onload=function(){
-
-            let ctx=canvas.getContext("2d");
-
-            let scale=image.width>800?800/image.width:1;
-
-            canvas.width=image.width*scale;
-            canvas.height=image.height*scale;
-
-            ctx.drawImage(image,0,0,canvas.width,canvas.height);
-
-            let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-            let data=imgData.data;
-
-            for(let i=0;i<data.length;i+=4){
-                let media=(data[i]+data[i+1]+data[i+2])/3;
-                let cor=media>140?255:0;
-                data[i]=data[i+1]=data[i+2]=cor;
-            }
-
-            ctx.putImageData(imgData,0,0);
-
-            status.innerText="🔍 Lendo imagem...";
-
-            Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
-
-                let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
-
-                if(!nums||nums.length<2){
-                    status.innerText="❌ Não achou %";
-                    return;
-                }
-
-                let p=normalizar(parseFloat(nums[0]));
-                let v=normalizar(parseFloat(nums[1]));
-
-                porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
-
-                let lista=gerarLista(p,v);
-                listaGlobal=lista;
-
-                listaDiv=document.getElementById("lista");
-                listaDiv.innerText=lista;
-
-                status.innerText="✅ Sinais prontos";
-            });
-
-        };
-
-        image.src=e.target.result;
-    };
-
-    reader.readAsDataURL(file);
-}
-
-// eventos
-cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
-fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 
 </script>
 
