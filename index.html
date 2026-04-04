@@ -73,6 +73,16 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
     padding:10px;
     border-radius:12px
 }
+
+.dica{
+    margin-top:10px;
+    padding:10px;
+    border-radius:10px;
+    background:#020617;
+    border:1px solid #334155;
+    text-align:center;
+    font-size:14px;
+}
 </style>
 
 </head>
@@ -102,13 +112,17 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <button onclick="copiarTudo()">📋 Copiar Lista</button>
 <button onclick="ativarSinais()">🚀 Ativar Sinais</button>
-<button id="blaze" onclick="abrirBlaze()">🌐 Abrir Blaze</button>
+<button id="blaze" onclick="abrirBlaze()">🎰 Abrir Blaze (Modo Trader)</button>
+
+<div class="dica">
+📱 Modo PRO: Use tela dividida com a Blaze para operar mais rápido
+</div>
 
 </div>
 
 <script>
 
-// 🔥 SERVICE WORKER
+// SERVICE WORKER
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
@@ -119,36 +133,12 @@ let loopAtivo = false;
 
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
-// PEDIR PERMISSÃO DE NOTIFICAÇÃO AO CARREGAR
-if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-    Notification.requestPermission();
-}
-
 // ALERTA
 function alertar(texto){
-
-    // Som
     audio.play().catch(()=>{});
-
-    // Vibração
     if(navigator.vibrate){
         navigator.vibrate([300,200,300,600]);
     }
-
-    // Notificação
-    if ("Notification" in window) {
-        if (Notification.permission === "granted") {
-            new Notification("🚨 ROBÔ DOUBLE", { body: texto, icon: "" });
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission().then(permission => {
-                if(permission === "granted"){
-                    new Notification("🚨 ROBÔ DOUBLE", { body: texto, icon: "" });
-                }
-            });
-        }
-    }
-
-    // Atualiza status na tela
     document.getElementById("status").innerText = "🚨 " + texto;
 }
 
@@ -156,14 +146,27 @@ function alertar(texto){
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 
-// 💣 ABRE BLAZE NO CHROME
-function abrirBlaze() {
-    const url = "https://blaze.com";
-    const intentUrl = `intent://${url.replace(/^https?:\/\//,'')}#Intent;package=com.android.chrome;scheme=https;end`;
-    window.location.href = intentUrl;
-    setTimeout(() => {
-        window.open(url, "_blank");
-    }, 1000);
+// 🔥 MODO TRADER (TELA DIVIDIDA)
+function abrirBlaze(){
+
+    // abre direto no DOUBLE
+    window.open("https://blaze.com/pt/games/double", "_blank");
+
+    // instrução automática
+    setTimeout(()=>{
+        alert(
+`📱 MODO TRADER ATIVADO
+
+Agora faça tela dividida:
+
+1️⃣ Aperte o botão de apps recentes
+2️⃣ Segure no Chrome
+3️⃣ Clique em "Tela dividida"
+4️⃣ Escolha o Robô
+
+🔥 Use Blaze + Robô juntos!`
+        );
+    }, 800);
 }
 
 // LÓGICA
@@ -206,7 +209,6 @@ function ativarSinais(){
     sinaisGlobais = [];
 
     linhas.forEach(linha=>{
-
         if(!linha) return;
 
         let [horario,sinal] = linha.split(" → ");
@@ -224,7 +226,6 @@ function ativarSinais(){
             aviso1:false,
             aviso2:false
         });
-
     });
 
     iniciarLoop();
@@ -245,7 +246,6 @@ function iniciarLoop(){
 
         if(proximo){
             let diff = proximo.alvo - agora;
-
             let min = Math.floor(diff/60000);
             let seg = Math.floor((diff%60000)/1000);
 
@@ -349,4 +349,4 @@ fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 </script>
 
 </body>
-    </html>
+</html>
