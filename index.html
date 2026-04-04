@@ -73,16 +73,6 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
     padding:10px;
     border-radius:12px
 }
-
-.dica{
-    margin-top:10px;
-    padding:10px;
-    border-radius:10px;
-    background:#020617;
-    border:1px solid #334155;
-    text-align:center;
-    font-size:14px;
-}
 </style>
 
 </head>
@@ -113,14 +103,10 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <button onclick="copiarTudo()">📋 Copiar Lista</button>
 <button onclick="ativarSinais()">🚀 Ativar Sinais</button>
 
-<!-- 🔥 BOTÃO CORRIGIDO (LINK REAL) -->
-<a href="https://blaze.com/pt/games/double" target="_blank">
-    <button id="blaze">🎰 Abrir Blaze (Modo Trader)</button>
+<!-- 🔥 BOTÃO PERFEITO (VAI PERGUNTAR ONDE ABRIR) -->
+<a href="intent://blaze.com/pt/games/double#Intent;scheme=https;end">
+    <button id="blaze">🎰 Abrir Blaze (Escolher navegador)</button>
 </a>
-
-<div class="dica">
-📱 Dica: Após abrir a Blaze, use tela dividida para operar junto com o robô
-</div>
 
 </div>
 
@@ -330,4 +316,4 @@ fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 </script>
 
 </body>
-    </html>
+</html>
