@@ -48,6 +48,32 @@ button{
 
 #blaze{background:#facc15;}
 
+img,canvas{width:100%;margin-top:10px;border-radius:12px}
+
+#status,#porcentagem,#contador{
+    text-align:center;
+    margin-top:8px;
+}
+
+#proximo{
+    margin-top:10px;
+    padding:10px;
+    border-radius:12px;
+    background:#0f172a;
+    border:1px solid #334155;
+    text-align:center;
+    font-size:18px;
+    color:#facc15;
+}
+
+#lista{
+    white-space:pre-line;
+    margin-top:10px;
+    border:1px solid #334155;
+    padding:10px;
+    border-radius:12px
+}
+
 .dica{
     margin-top:10px;
     padding:10px;
@@ -67,86 +93,241 @@ button{
 
 <h2>📸 Robô Double PRO</h2>
 
-<button onclick="abrirBlaze()">🎰 Abrir Blaze (Modo Trader)</button>
+<button onclick="abrirCamera()">📸 Tirar Foto</button>
+<button onclick="abrirGaleria()">🖼️ Galeria</button>
 
-<div class="dica" id="modo"></div>
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
+<img id="preview">
+<canvas id="canvas"></canvas>
+
+<p id="status">Aguardando imagem...</p>
+<p id="porcentagem"></p>
+
+<div id="proximo">⏳ Aguardando sinais...</div>
+<p id="contador"></p>
+
+<div id="lista"></div>
+
+<button onclick="copiarTudo()">📋 Copiar Lista</button>
+<button onclick="ativarSinais()">🚀 Ativar Sinais</button>
+
+<!-- 🔥 BOTÃO CORRIGIDO (LINK REAL) -->
+<a href="https://blaze.com/pt/games/double" target="_blank">
+    <button id="blaze">🎰 Abrir Blaze (Modo Trader)</button>
+</a>
+
+<div class="dica">
+📱 Dica: Após abrir a Blaze, use tela dividida para operar junto com o robô
+</div>
 
 </div>
 
 <script>
 
-// 🔍 DETECTA PWA
-function estaEmPWA(){
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
 }
 
-// AVISO AUTOMÁTICO
-window.onload = function(){
+let listaGlobal = "";
+let sinaisGlobais = [];
+let loopAtivo = false;
 
-    if(estaEmPWA()){
-        document.getElementById("modo").innerHTML =
-        "⚠️ Você está no modo APP<br>Abra pelo Chrome para melhor funcionamento";
-    } else {
-        document.getElementById("modo").innerHTML =
-        "✅ Modo correto (Chrome)";
+const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
+
+// ALERTA
+function alertar(texto){
+    audio.play().catch(()=>{});
+    if(navigator.vibrate){
+        navigator.vibrate([300,200,300,600]);
+    }
+    document.getElementById("status").innerText = "🚨 " + texto;
+}
+
+// BOTÕES
+function abrirCamera(){cameraInput.click();}
+function abrirGaleria(){fileInput.click();}
+
+// LÓGICA
+function normalizar(v){if(v>100)v=v/10;return v;}
+
+function gerarCores(p,v){
+    let total=p+v;
+    let prob=v/total;
+    let cores=[];
+    for(let i=0;i<10;i++){
+        cores.push(Math.random()<prob?"🔴":"⚫");
+    }
+    return cores;
+}
+
+function gerarLista(p,v){
+    let cores=gerarCores(p,v);
+    let d=new Date();
+    let h=d.getHours(),m=d.getMinutes();
+    let lista="";
+
+    for(let i=0;i<cores.length;i++){
+        m+=3;if(m>=60){m-=60;h++;}
+        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cores[i]}+⚪️\n`;
     }
 
+    listaGlobal=lista;
+    document.getElementById("lista").innerText=lista;
 }
 
-// 🚀 ABRIR BLAZE INTELIGENTE
-function abrirBlaze(){
+// ATIVAR
+function ativarSinais(){
 
-    const url = "https://blaze.com/pt/games/double";
-
-    // se estiver em PWA, avisa forte
-    if(estaEmPWA()){
-        alert(
-`🚨 MODO ERRADO
-
-Você abriu como APP.
-
-👉 Abra pelo Google Chrome:
-https://sampaioh309-lab.github.io/roboblaze/
-
-Depois tente novamente.`
-        );
+    if(!listaGlobal){
+        alert("Gere a lista primeiro!");
         return;
     }
 
-    // tentativa 1
-    let win = window.open(url, "_blank");
+    let linhas = listaGlobal.split("\n");
+    sinaisGlobais = [];
 
-    // tentativa 2 (fallback)
-    setTimeout(()=>{
-        if(!win || win.closed){
-            window.location.href = url;
-        }
-    }, 800);
+    linhas.forEach(linha=>{
+        if(!linha) return;
 
-    // tentativa 3 (forçar chrome android)
-    setTimeout(()=>{
-        window.location.href = "intent://blaze.com/pt/games/double#Intent;scheme=https;package=com.android.chrome;end";
-    }, 1500);
+        let [horario,sinal] = linha.split(" → ");
+        let [h,m] = horario.split(":").map(Number);
 
-    // guia
-    setTimeout(()=>{
-        alert(
-`📱 MODO TRADER
+        let alvo = new Date();
+        alvo.setHours(h,m,0,0);
 
-Agora faça tela dividida:
+        if(alvo < new Date()) return;
 
-1️⃣ Botão de apps recentes
-2️⃣ Segure no Chrome
-3️⃣ Tela dividida
-4️⃣ Escolha o robô
+        sinaisGlobais.push({
+            horario,
+            sinal,
+            alvo: alvo.getTime(),
+            aviso1:false,
+            aviso2:false
+        });
+    });
 
-🔥 Use os dois juntos`
-        );
-    }, 2500);
-
+    iniciarLoop();
+    document.getElementById("status").innerText = "🚀 Sinais ativados!";
 }
+
+// LOOP
+function iniciarLoop(){
+
+    if(loopAtivo) return;
+    loopAtivo = true;
+
+    setInterval(()=>{
+
+        let agora = Date.now();
+
+        let proximo = sinaisGlobais.find(s => s.alvo > agora);
+
+        if(proximo){
+            let diff = proximo.alvo - agora;
+            let min = Math.floor(diff/60000);
+            let seg = Math.floor((diff%60000)/1000);
+
+            document.getElementById("contador").innerText =
+            `⏳ ${min}m ${seg}s`;
+
+            document.getElementById("proximo").innerText =
+            `🎯 Próximo: ${proximo.horario} → ${proximo.sinal}`;
+        }
+
+        sinaisGlobais.forEach(s=>{
+
+            let diff = s.alvo - agora;
+
+            if(diff <= 60000 && diff > 59000 && !s.aviso1){
+                alertar(`Falta 1 minuto! ${s.horario} apostar ${s.sinal}`);
+                s.aviso1 = true;
+            }
+
+            if(diff <= 10000 && diff > 9000 && !s.aviso2){
+                alertar(`ATENÇÃO! ${s.horario} apostar ${s.sinal}`);
+                s.aviso2 = true;
+            }
+
+        });
+
+    }, 500);
+}
+
+// COPIAR
+function copiarTudo(){
+    navigator.clipboard.writeText(listaGlobal);
+    alert("Copiado!");
+}
+
+// OCR
+function processarImagem(file){
+
+    const reader=new FileReader();
+
+    reader.onload=function(e){
+
+        preview.src=e.target.result;
+
+        let image=new Image();
+
+        image.onload=function(){
+
+            let ctx=canvas.getContext("2d");
+
+            let scale=image.width>800?800/image.width:1;
+
+            canvas.width=image.width*scale;
+            canvas.height=image.height*scale;
+
+            ctx.drawImage(image,0,0,canvas.width,canvas.height);
+
+            let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+            let data=imgData.data;
+
+            for(let i=0;i<data.length;i+=4){
+                let media=(data[i]+data[i+1]+data[i+2])/3;
+                let cor=media>140?255:0;
+                data[i]=data[i+1]=data[i+2]=cor;
+            }
+
+            ctx.putImageData(imgData,0,0);
+
+            status.innerText="🔍 Lendo imagem...";
+
+            Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
+
+                let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
+
+                if(!nums||nums.length<2){
+                    status.innerText="❌ Não achou %";
+                    return;
+                }
+
+                let p=normalizar(parseFloat(nums[0]));
+                let v=normalizar(parseFloat(nums[1]));
+
+                porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
+
+                gerarLista(p,v);
+
+                status.innerText="✅ Lista gerada";
+            });
+
+        };
+
+        image.src=e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+}
+
+cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
+fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 
 </script>
 
 </body>
-</html>
+    </html>
