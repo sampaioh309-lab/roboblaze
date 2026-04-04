@@ -119,26 +119,36 @@ let loopAtivo = false;
 
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
-// PERMISSÃO
-if ("Notification" in window) {
+// PEDIR PERMISSÃO DE NOTIFICAÇÃO AO CARREGAR
+if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
     Notification.requestPermission();
 }
 
 // ALERTA
 function alertar(texto){
 
+    // Som
     audio.play().catch(()=>{});
 
+    // Vibração
     if(navigator.vibrate){
         navigator.vibrate([300,200,300,600]);
     }
 
-    if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("🚨 ROBÔ DOUBLE", {
-            body: texto
-        });
+    // Notificação
+    if ("Notification" in window) {
+        if (Notification.permission === "granted") {
+            new Notification("🚨 ROBÔ DOUBLE", { body: texto, icon: "" });
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+                if(permission === "granted"){
+                    new Notification("🚨 ROBÔ DOUBLE", { body: texto, icon: "" });
+                }
+            });
+        }
     }
 
+    // Atualiza status na tela
     document.getElementById("status").innerText = "🚨 " + texto;
 }
 
@@ -339,4 +349,4 @@ fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 </script>
 
 </body>
-</html>
+    </html>
