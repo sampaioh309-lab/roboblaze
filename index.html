@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robô Double PRO</title>
+
+<meta name="theme-color" content="#020617">
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+    font-family: Arial;
+    background: linear-gradient(135deg,#020617,#0f172a);
+    color:#e2e8f0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+#app{
+    width:95%;
+    max-width:420px;
+    background:#020617;
+    border-radius:20px;
+    padding:16px;
+    border:1px solid #1e293b;
+}
+
+h2{text-align:center;color:#38bdf8;margin-bottom:10px}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:8px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg,#00f5ff,#00ff95);
+    color:#000;
+    font-weight:bold;
+}
+
+#blaze{background:#facc15;}
+
+img,canvas{width:100%;margin-top:10px;border-radius:12px}
+
+#status,#porcentagem,#contador{
+    text-align:center;
+    margin-top:8px;
+}
+
+#proximo{
+    margin-top:10px;
+    padding:10px;
+    border-radius:12px;
+    background:#0f172a;
+    border:1px solid #334155;
+    text-align:center;
+    font-size:18px;
+    color:#facc15;
+}
+
+#lista{
+    white-space:pre-line;
+    margin-top:10px;
+    border:1px solid #334155;
+    padding:10px;
+    border-radius:12px
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="app">
+
+<h2>📸 Robô Double PRO</h2>
+
+<button onclick="abrirCamera()">📸 Tirar Foto</button>
+<button onclick="abrirGaleria()">🖼️ Galeria</button>
+
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
+<img id="preview">
+<canvas id="canvas"></canvas>
+
+<p id="status">Aguardando imagem...</p>
+<p id="porcentagem"></p>
+
+<div id="proximo">⏳ Aguardando sinais...</div>
+<p id="contador"></p>
+
+<div id="lista"></div>
+
+<button onclick="copiarTudo()">📋 Copiar Lista</button>
+<button onclick="ativarSinais()">🚀 Ativar Sinais</button>
+<button id="blaze" onclick="abrirBlaze()">🌐 Abrir Blaze</button>
+
+</div>
+
+<script>
+
+let listaGlobal = "";
+let sinaisGlobais = [];
+let loopAtivo = false;
+
+const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
+
+// PERMISSÃO
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
+// VOZ
+function falar(texto){
+    try{
+        let msg = new SpeechSynthesisUtterance(texto);
+        msg.lang = "pt-BR";
+        speechSynthesis.speak(msg);
+    }catch(e){}
+}
+
+// ALERTA
+function alertar(texto){
+
+    audio.play().catch(()=>{});
+
+    if(navigator.vibrate){
+        navigator.vibrate([300,200,300,600]);
+    }
+
+    falar(texto);
+
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("🚨 ROBÔ DOUBLE", {
+            body: texto
+        });
+    }
+
+    document.getElementById("status").innerText = "🚨 " + texto;
+}
+
+// BOTÕES
+function abrirCamera(){cameraInput.click();}
+function abrirGaleria(){fileInput.click();}
+function abrirBlaze(){window.location.href="https://blaze.com";}
+
+// LÓGICA
+function normalizar(v){if(v>100)v=v/10;return v;}
+
+function gerarCores(p,v){
+    let total=p+v;
+    let prob=v/total;
+    let cores=[];
+    for(let i=0;i<10;i++){
+        cores.push(Math.random()<prob?"🔴":"⚫");
+    }
+    return cores;
+}
+
+function gerarLista(p,v){
+    let cores=gerarCores(p,v);
+    let d=new Date();
+    let h=d.getHours(),m=d.getMinutes();
+    let lista="";
+
+    for(let i=0;i<cores.length;i++){
+        m+=3;if(m>=60){m-=60;h++;}
+        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cores[i]}+⚪️\n`;
+    }
+
+    listaGlobal=lista;
+    document.getElementById("lista").innerText=lista;
+}
+
+// ATIVAR
+function ativarSinais(){
+
+    if(!listaGlobal){
+        alert("Gere a lista primeiro!");
+        return;
+    }
+
+    // 🔥 ENVIA PRO APP ANDROID
+    if(typeof Android !== "undefined"){
+        Android.enviarSinais(listaGlobal);
+    }
+
+    let linhas = listaGlobal.split("\n");
+    sinaisGlobais = [];
+
+    linhas.forEach(linha=>{
+
+        if(!linha) return;
+
+        let [horario,sinal] = linha.split(" → ");
+        let [h,m] = horario.split(":").map(Number);
+
+        let alvo = new Date();
+        alvo.setHours(h,m,0,0);
+
+        if(alvo < new Date()) return;
+
+        sinaisGlobais.push({
+            horario,
+            sinal,
+            alvo: alvo.getTime(),
+            aviso1:false,
+            aviso2:false
+        });
+
+    });
+
+    iniciarLoop();
+    document.getElementById("status").innerText = "🚀 Sinais ativados!";
+}
+
+// LOOP
+function iniciarLoop(){
+
+    if(loopAtivo) return;
+    loopAtivo = true;
+
+    setInterval(()=>{
+
+        let agora = Date.now();
+
+        let proximo = sinaisGlobais.find(s => s.alvo > agora);
+
+        if(proximo){
+            let diff = proximo.alvo - agora;
+
+            let min = Math.floor(diff/60000);
+            let seg = Math.floor((diff%60000)/1000);
+
+            document.getElementById("contador").innerText =
+            `⏳ ${min}m ${seg}s`;
+
+            document.getElementById("proximo").innerText =
+            `🎯 Próximo: ${proximo.horario} → ${proximo.sinal}`;
+        }
+
+        sinaisGlobais.forEach(s=>{
+
+            let diff = s.alvo - agora;
+
+            if(diff <= 60000 && diff > 59000 && !s.aviso1){
+                alertar(`Falta 1 minuto! ${s.horario} apostar ${s.sinal}`);
+                s.aviso1 = true;
+            }
+
+            if(diff <= 10000 && diff > 9000 && !s.aviso2){
+                alertar(`ATENÇÃO! ${s.horario} apostar ${s.sinal}`);
+                s.aviso2 = true;
+            }
+
+        });
+
+    }, 500);
+}
+
+// COPIAR
+function copiarTudo(){
+    navigator.clipboard.writeText(listaGlobal);
+    alert("Copiado!");
+}
+
+// OCR
+function processarImagem(file){
+
+    const reader=new FileReader();
+
+    reader.onload=function(e){
+
+        preview.src=e.target.result;
+
+        let image=new Image();
+
+        image.onload=function(){
+
+            let ctx=canvas.getContext("2d");
+
+            let scale=image.width>800?800/image.width:1;
+
+            canvas.width=image.width*scale;
+            canvas.height=image.height*scale;
+
+            ctx.drawImage(image,0,0,canvas.width,canvas.height);
+
+            let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+            let data=imgData.data;
+
+            for(let i=0;i<data.length;i+=4){
+                let media=(data[i]+data[i+1]+data[i+2])/3;
+                let cor=media>140?255:0;
+                data[i]=data[i+1]=data[i+2]=cor;
+            }
+
+            ctx.putImageData(imgData,0,0);
+
+            status.innerText="🔍 Lendo imagem...";
+
+            Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
+
+                let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
+
+                if(!nums||nums.length<2){
+                    status.innerText="❌ Não achou %";
+                    return;
+                }
+
+                let p=normalizar(parseFloat(nums[0]));
+                let v=normalizar(parseFloat(nums[1]));
+
+                porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
+
+                gerarLista(p,v);
+
+                status.innerText="✅ Lista gerada";
+            });
+
+        };
+
+        image.src=e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+}
+
+cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
+fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
+
+</script>
+
+</body>
+  </html>
