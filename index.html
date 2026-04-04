@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Robô Double PRO</title>
+
+<!-- 🔥 PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020617">
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
@@ -31,7 +37,15 @@ body{
 
 h2{text-align:center;color:#38bdf8;margin-bottom:10px}
 
-input{width:100%;margin:10px 0;padding:8px;background:#020617;border:1px solid #334155;color:#fff;border-radius:10px}
+input{
+    width:100%;
+    margin:10px 0;
+    padding:10px;
+    background:#020617;
+    border:1px solid #334155;
+    color:#fff;
+    border-radius:10px
+}
 
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
@@ -61,6 +75,7 @@ button{
     font-weight:bold;
 }
 </style>
+
 </head>
 
 <body>
@@ -69,7 +84,8 @@ button{
 
 <h2>📸 Robô Double PRO</h2>
 
-<input type="file" id="upload">
+<input type="file" id="upload" accept="image/*" capture="environment">
+
 <img id="preview">
 <canvas id="canvas"></canvas>
 
@@ -86,6 +102,9 @@ button{
 
 <script>
 
+// 🔊 SOM
+const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
+
 // ================= NOTIFICAÇÃO =================
 
 function pedirPermissao(){
@@ -94,12 +113,22 @@ function pedirPermissao(){
     }
 }
 
-function enviarNotificacao(texto){
-    if(Notification.permission === "granted"){
-        new Notification("🚨 SINAL DOUBLE", {
-            body: texto
-        });
+function alertar(texto){
+    // 🔊 som
+    audio.play().catch(()=>{});
+
+    // 📳 vibração
+    if(navigator.vibrate){
+        navigator.vibrate(500);
     }
+
+    // 🔔 notificação
+    if(Notification.permission === "granted"){
+        new Notification("🚨 SINAL DOUBLE", { body: texto });
+    }
+
+    // fallback visual
+    alert(texto);
 }
 
 // ================= LÓGICA =================
@@ -122,6 +151,7 @@ function gerarCores(preto, vermelho){
 }
 
 function gerarLista(preto, vermelho){
+
     let cores = gerarCores(preto, vermelho);
 
     let agora = new Date();
@@ -131,6 +161,7 @@ function gerarLista(preto, vermelho){
     let lista = "";
 
     for(let i=0;i<cores.length;i++){
+
         m += 3;
         if(m >= 60){ m -= 60; h++; }
 
@@ -142,7 +173,7 @@ function gerarLista(preto, vermelho){
     return lista;
 }
 
-// ================= AGENDAR SINAIS =================
+// ================= AGENDAR =================
 
 function agendarSinais(lista){
 
@@ -162,19 +193,16 @@ function agendarSinais(lista){
         let dataAlvo = new Date();
         dataAlvo.setHours(parseInt(h), parseInt(m), 0, 0);
 
-        // 1 MINUTO ANTES
         let dataNotificacao = new Date(dataAlvo.getTime() - 60000);
 
         let delay = dataNotificacao - agora;
 
-        let horaFormatada = horario.replace(":", ": ");
+        let texto = `${horario} apostar ${sinal}`;
 
         if(delay <= 0){
-            enviarNotificacao(`${horaFormatada} apostar ${sinal}`);
+            alertar(texto);
         } else {
-            setTimeout(() => {
-                enviarNotificacao(`${horaFormatada} apostar ${sinal}`);
-            }, delay);
+            setTimeout(() => alertar(texto), delay);
         }
 
     });
@@ -183,10 +211,12 @@ function agendarSinais(lista){
 // ================= BARRA =================
 
 function carregarBarra(callback){
+
     let progresso = document.getElementById("progresso");
     let valor = 0;
 
     let intervalo = setInterval(()=>{
+
         valor += 4;
         progresso.style.width = valor + "%";
 
@@ -206,7 +236,7 @@ function copiarTudo(){
     alert("Copiado!");
 }
 
-// ================= OCR (CORRIGIDO) =================
+// ================= OCR =================
 
 document.getElementById("upload").addEventListener("change", function(e){
 
@@ -229,13 +259,8 @@ document.getElementById("upload").addEventListener("change", function(e){
             let canvas = document.getElementById("canvas");
             let ctx = canvas.getContext("2d");
 
-            // 🔥 REDUZ TAMANHO PRA NÃO TRAVAR
             let maxWidth = 800;
-            let scale = 1;
-
-            if(image.width > maxWidth){
-                scale = maxWidth / image.width;
-            }
+            let scale = image.width > maxWidth ? maxWidth / image.width : 1;
 
             canvas.width = image.width * scale;
             canvas.height = image.height * scale;
@@ -296,4 +321,4 @@ document.getElementById("upload").addEventListener("change", function(e){
 </script>
 
 </body>
-    </html>
+</html>
