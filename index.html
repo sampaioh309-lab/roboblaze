@@ -35,7 +35,7 @@ body{
 
 h2{text-align:center;color:#38bdf8;margin-bottom:10px}
 
-button{
+button,.botao{
     width:100%;
     padding:12px;
     margin-top:8px;
@@ -44,6 +44,7 @@ button{
     background:linear-gradient(90deg,#00f5ff,#00ff95);
     color:#000;
     font-weight:bold;
+    text-align:center;
 }
 
 #blaze{background:#facc15;}
@@ -79,10 +80,12 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <h2>📸 Robô Double PRO</h2>
 
-<button onclick="abrirCamera()">📸 Tirar Foto</button>
-<button onclick="abrirGaleria()">🖼️ Galeria</button>
-
+<!-- CÂMERA -->
+<label for="cameraInput" class="botao">📸 Tirar Foto</label>
 <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+
+<!-- GALERIA -->
+<label for="fileInput" class="botao">🖼️ Galeria</label>
 <input type="file" id="fileInput" accept="image/*" style="display:none">
 
 <img id="preview">
@@ -112,7 +115,6 @@ const firebaseConfig = {
   apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
   authDomain: "roboblaze-8dfde.firebaseapp.com",
   projectId: "roboblaze-8dfde",
-  storageBucket: "roboblaze-8dfde.firebasestorage.app",
   messagingSenderId: "88914971613",
   appId: "1:88914971613:web:a04143458a9ea4fdac0434"
 };
@@ -120,6 +122,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
+// PERMISSÃO
 Notification.requestPermission().then((permission) => {
   if (permission === "granted") {
     getToken(messaging, {
@@ -130,6 +133,7 @@ Notification.requestPermission().then((permission) => {
   }
 });
 
+// RECEBER COM APP ABERTO
 onMessage(messaging, (payload) => {
   alert(payload.notification.title + "\n" + payload.notification.body);
 });
@@ -143,15 +147,7 @@ if ('serviceWorker' in navigator) {
 
 let listaGlobal = "";
 
-// BOTÕES CORRIGIDOS
-function abrirCamera(){
-    document.getElementById("cameraInput").click();
-}
-
-function abrirGaleria(){
-    document.getElementById("fileInput").click();
-}
-
+// ABRIR BLAZE
 function abrirBlaze(){
     window.location.href="https://blaze.com";
 }
@@ -269,4 +265,4 @@ document.getElementById("fileInput").onchange = e=>{
 </script>
 
 </body>
-    </html>
+</html>
