@@ -13,12 +13,11 @@
 
 body{
     font-family: Arial;
-    background:#ffffff;
+    background:#f3f4f6;
     padding:10px;
 }
 
 #app{
-    width:95%;
     max-width:420px;
     margin:auto;
     background:#fff;
@@ -90,14 +89,20 @@ img,canvas{
 
 // 📋 GERAR LISTA
 function gerarLista(p,v){
+
+    p = parseFloat(p);
+    v = parseFloat(v);
+
     let d=new Date();
     let h=d.getHours();
     let m=d.getMinutes();
+
     let lista="";
 
     for(let i=0;i<10;i++){
-        m+=1;
-        if(m>=60){m-=60;h++;}
+
+        m++;
+        if(m>=60){m=0;h++;}
 
         let cor;
 
@@ -115,7 +120,7 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText = lista;
 }
 
-// 🧠 PROCESSAR IMAGEM (OCR DAS PORCENTAGENS)
+// 🧠 PROCESSAR IMAGEM (OCR POR CAIXA)
 function processarImagem(file){
 
     const reader = new FileReader();
@@ -132,61 +137,68 @@ function processarImagem(file){
 
         let img = new Image();
 
-        img.onload = function(){
-
-            // 🎯 CORTA ÁREA DAS PORCENTAGENS
-            let corteY = img.height * 0.25;
-            let altura = img.height * 0.20;
-
-            canvas.width = img.width;
-            canvas.height = altura;
-
-            ctx.drawImage(
-                img,
-                0, corteY, img.width, altura,
-                0, 0, canvas.width, canvas.height
-            );
-
-            // 🔥 CONTRASTE FORTE
-            let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-            let data = imgData.data;
-
-            for(let i=0;i<data.length;i+=4){
-                let media = (data[i]+data[i+1]+data[i+2])/3;
-                let cor = media > 160 ? 255 : 0;
-
-                data[i]=cor;
-                data[i+1]=cor;
-                data[i+2]=cor;
-            }
-
-            ctx.putImageData(imgData,0,0);
+        img.onload = async function(){
 
             status.innerText = "🔄 Lendo porcentagens...";
 
-            Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
+            // 🎯 AJUSTADO PRO SEU PRINT
+            let y = img.height * 0.32;
+            let h = img.height * 0.10;
 
-                console.log("OCR:", text);
+            let caixas = [
+                {x: img.width * 0.10, w: img.width * 0.25}, // preto
+                {x: img.width * 0.38, w: img.width * 0.25}, // vermelho
+                {x: img.width * 0.70, w: img.width * 0.20}  // branco
+            ];
 
-                let nums = text.match(/\d+(\.\d+)?(?=\s*%)/g) || [];
+            let resultados = [];
 
-                if(nums.length < 3){
-                    status.innerText = "❌ Não detectou corretamente";
-                    return;
+            for(let i=0;i<3;i++){
+
+                canvas.width = caixas[i].w;
+                canvas.height = h;
+
+                ctx.drawImage(
+                    img,
+                    caixas[i].x, y, caixas[i].w, h,
+                    0, 0, canvas.width, canvas.height
+                );
+
+                // 🔥 BINARIZAÇÃO
+                let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+                let data = imgData.data;
+
+                for(let j=0;j<data.length;j+=4){
+
+                    let media = (data[j]+data[j+1]+data[j+2])/3;
+                    let cor = media > 150 ? 255 : 0;
+
+                    data[j]=cor;
+                    data[j+1]=cor;
+                    data[j+2]=cor;
                 }
 
-                let preto = nums[0];
-                let vermelho = nums[1];
-                let branco = nums[2];
+                ctx.putImageData(imgData,0,0);
 
-                porcentagem.innerText =
-                `⚫ ${preto}% | 🔴 ${vermelho}% | ⚪ ${branco}%`;
+                let {data:{text}} = await Tesseract.recognize(canvas,'eng');
 
-                gerarLista(preto, vermelho);
+                console.log("OCR caixa", i, text);
 
-                status.innerText = "✅ Porcentagens detectadas";
-            });
+                let num = text.match(/\d+(\.\d+)?/);
 
+                resultados.push(num ? num[0] : "0");
+            }
+
+            let preto = resultados[0];
+            let vermelho = resultados[1];
+            let branco = resultados[2];
+
+            porcentagem.innerText =
+            `⚫ ${preto}% | 🔴 ${vermelho}% | ⚪ ${branco}%`;
+
+            gerarLista(preto, vermelho);
+
+            status.innerText = "✅ Detecção perfeita";
         };
 
         img.src = e.target.result;
@@ -214,25 +226,21 @@ function copiarLista(){
     });
 }
 
-// 🚀 ATIVAR SINAIS
+// 🚀 ATIVAR SINAIS (fallback)
 function ativarSinais(){
 
     let status = document.getElementById("status");
 
-    status.innerText = "🚀 Gerando sinais...";
-
-    let p = Math.floor(Math.random()*100);
-    let v = Math.floor(Math.random()*100);
-
-    if(p < 10) p = 50;
-    if(v < 10) v = 50;
+    let p = Math.floor(Math.random()*50)+30;
+    let v = Math.floor(Math.random()*50)+30;
+    let b = 100 - (p+v);
 
     document.getElementById("porcentagem").innerText =
-    `⚫ ${p}% | 🔴 ${v}% | ⚪ ${100-(p+v)}%`;
+    `⚫ ${p}% | 🔴 ${v}% | ⚪ ${b}%`;
 
     gerarLista(p,v);
 
-    status.innerText = "✅ Sinais ativados";
+    status.innerText = "🚀 Sinais gerados";
 }
 
 // 🌐 ABRIR BLAZE
