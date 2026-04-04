@@ -109,7 +109,7 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <script>
 
-// FIREBASE
+// ================= FIREBASE =================
 const firebaseConfig = {
   apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
   authDomain: "roboblaze-8dfde.firebaseapp.com",
@@ -142,11 +142,14 @@ if ('serviceWorker' in navigator) {
 // ================= ROBÔ =================
 
 let listaGlobal = "";
+let processando = false;
 
+// BLAZE
 function abrirBlaze(){
     window.location.href="https://blaze.com";
 }
 
+// CARREGAMENTO
 function animarCarregamento(callback){
     let progresso = document.getElementById("progresso");
     progresso.style.width = "0%";
@@ -165,18 +168,28 @@ function animarCarregamento(callback){
 
 // GERAR LISTA
 function gerarLista(p,v){
-    let d=new Date();
-    let h=d.getHours(),m=d.getMinutes();
-    let lista="";
+
+    let d = new Date();
+    let h = d.getHours();
+    let m = d.getMinutes();
+
+    let lista = "";
 
     for(let i=0;i<10;i++){
-        m+=3;if(m>=60){m-=60;h++;}
-        let cor=Math.random()<0.5?"🔴":"⚫";
-        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
+
+        m += 3;
+        if(m >= 60){
+            m -= 60;
+            h++;
+        }
+
+        let cor = Math.random() < (v/100) ? "🔴" : "⚫";
+
+        lista += `${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
     }
 
-    listaGlobal=lista;
-    document.getElementById("lista").innerText=lista;
+    listaGlobal = lista;
+    document.getElementById("lista").innerText = lista;
 }
 
 // BOTÕES
@@ -193,27 +206,35 @@ function copiarTudo(){
     alert("Copiado!");
 }
 
-// OCR MELHORADO
+// OCR CORRIGIDO
 function processarImagem(file){
 
-    const reader=new FileReader();
+    if(processando) return;
+    processando = true;
 
-    reader.onload=function(e){
+    const reader = new FileReader();
 
-        preview.src=e.target.result;
+    reader.onload = function(e){
 
-        let image=new Image();
+        const preview = document.getElementById("preview");
+        const canvas = document.getElementById("canvas");
+        const status = document.getElementById("status");
+        const porcentagem = document.getElementById("porcentagem");
 
-        image.onload=function(){
+        preview.src = e.target.result;
 
-            let ctx=canvas.getContext("2d");
+        let image = new Image();
 
-            canvas.width=image.width;
-            canvas.height=image.height;
+        image.onload = function(){
+
+            let ctx = canvas.getContext("2d");
+
+            canvas.width = image.width;
+            canvas.height = image.height;
 
             ctx.drawImage(image,0,0);
 
-            status.innerText="🔄 Processando...";
+            status.innerText = "🔄 Processando...";
 
             animarCarregamento(()=>{
 
@@ -221,47 +242,47 @@ function processarImagem(file){
 
                     console.log("OCR TEXTO:", text);
 
-                    // LIMPA TEXTO
                     let limpo = text.replace(/[^\d.\n]/g, " ");
-
                     let nums = limpo.match(/\d+(\.\d+)?/g);
 
-                    if(!nums || nums.length < 2){
-                        status.innerText = "❌ Não encontrou números";
-                        return;
+                    let p = 50;
+                    let v = 50;
+
+                    if(nums && nums.length >= 2){
+                        p = parseFloat(nums[0]);
+                        v = parseFloat(nums[1]);
+
+                        if(p > 100 || v > 100){
+                            p = 50;
+                            v = 50;
+                        }
                     }
 
-                    let p = parseFloat(nums[0]);
-                    let v = parseFloat(nums[1]);
-
-                    if(p > 100 || v > 100){
-                        status.innerText = "❌ Valores inválidos";
-                        return;
-                    }
-
-                    porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
+                    porcentagem.innerText = `⚫ ${p}% | 🔴 ${v}%`;
 
                     gerarLista(p,v);
 
-                    status.innerText="✅ Lista gerada";
+                    status.innerText = "✅ Lista gerada";
+
+                    processando = false;
                 });
 
             });
 
         };
 
-        image.src=e.target.result;
+        image.src = e.target.result;
     };
 
     reader.readAsDataURL(file);
 }
 
-// EVENTOS
-document.getElementById("cameraInput").onchange = e=>{
+// EVENTOS (SEM DUPLICAR)
+document.getElementById("cameraInput").onchange = function(e){
     if(e.target.files[0]) processarImagem(e.target.files[0]);
 };
 
-document.getElementById("fileInput").onchange = e=>{
+document.getElementById("fileInput").onchange = function(e){
     if(e.target.files[0]) processarImagem(e.target.files[0]);
 };
 
