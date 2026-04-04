@@ -146,16 +146,14 @@ function alertar(texto){
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 
-// 💣 ABRE FORA DO APP (SOLUÇÃO REAL)
-function abrirBlaze(){
-
-    // tenta forçar Chrome
-    window.location.href = "intent://blaze.com/#Intent;scheme=https;package=com.android.chrome;end";
-
-    // fallback
-    setTimeout(()=>{
-        window.open("https://blaze.com", "_blank");
-    }, 500);
+// 💣 ABRE BLAZE NO CHROME
+function abrirBlaze() {
+    const url = "https://blaze.com";
+    const intentUrl = `intent://${url.replace(/^https?:\/\//,'')}#Intent;package=com.android.chrome;scheme=https;end`;
+    window.location.href = intentUrl;
+    setTimeout(() => {
+        window.open(url, "_blank");
+    }, 1000);
 }
 
 // LÓGICA
