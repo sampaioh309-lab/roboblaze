@@ -11,10 +11,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
@@ -39,7 +35,7 @@ body{
 
 h2{text-align:center;color:#38bdf8;margin-bottom:10px}
 
-button,.botao{
+button{
     width:100%;
     padding:12px;
     margin-top:8px;
@@ -48,7 +44,6 @@ button,.botao{
     background:linear-gradient(90deg,#00f5ff,#00ff95);
     color:#000;
     font-weight:bold;
-    text-align:center;
 }
 
 #blaze{background:#facc15;}
@@ -84,10 +79,10 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <h2>📸 Robô Double PRO</h2>
 
-<label for="cameraInput" class="botao">📸 Tirar Foto</label>
-<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+<button onclick="abrirCamera()">📸 Tirar Foto</button>
+<button onclick="abrirGaleria()">🖼️ Galeria</button>
 
-<label for="fileInput" class="botao">🖼️ Galeria</label>
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="fileInput" accept="image/*" style="display:none">
 
 <img id="preview">
@@ -107,23 +102,28 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 </div>
 
-<script>
+<script type="module">
 
-// ================= FIREBASE =================
+// FIREBASE
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
   authDomain: "roboblaze-8dfde.firebaseapp.com",
   projectId: "roboblaze-8dfde",
+  storageBucket: "roboblaze-8dfde.firebasestorage.app",
   messagingSenderId: "88914971613",
   appId: "1:88914971613:web:a04143458a9ea4fdac0434"
 };
 
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
+// PERMISSÃO
 Notification.requestPermission().then((permission) => {
   if (permission === "granted") {
-    messaging.getToken({
+    getToken(messaging, {
       vapidKey: "BMQ-zkZ9SLHAlRY0Mmy6F4Srf468OZl0VVL0qn9B-Bc11bQz-hy-gX7LNB9XoHHD5XIciMVwyYoRcyBm9ZoXb3E"
     }).then((token) => {
       console.log("TOKEN:", token);
@@ -131,34 +131,31 @@ Notification.requestPermission().then((permission) => {
   }
 });
 
-messaging.onMessage((payload) => {
+// RECEBER COM APP ABERTO
+onMessage(messaging, (payload) => {
   alert(payload.notification.title + "\n" + payload.notification.body);
 });
 
+// SERVICE WORKER
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
-// ================= ROBÔ =================
+// ================= RESTO DO ROBÔ =================
 
 let listaGlobal = "";
-let processando = false;
 
-// BLAZE
-function abrirBlaze(){
-    window.location.href="https://blaze.com";
-}
+function abrirCamera(){cameraInput.click();}
+function abrirGaleria(){fileInput.click();}
+function abrirBlaze(){window.location.href="https://blaze.com";}
 
-// CARREGAMENTO
 function animarCarregamento(callback){
     let progresso = document.getElementById("progresso");
-    progresso.style.width = "0%";
     let valor = 0;
 
     let intervalo = setInterval(()=>{
         valor += 5;
         progresso.style.width = valor + "%";
-
         if(valor >= 100){
             clearInterval(intervalo);
             setTimeout(callback, 300);
@@ -166,39 +163,29 @@ function animarCarregamento(callback){
     },80);
 }
 
-// GERAR LISTA
+function normalizar(v){if(v>100)v=v/10;return v;}
+
 function gerarLista(p,v){
-
-    let d = new Date();
-    let h = d.getHours();
-    let m = d.getMinutes();
-
-    let lista = "";
+    let d=new Date();
+    let h=d.getHours(),m=d.getMinutes();
+    let lista="";
 
     for(let i=0;i<10;i++){
-
-        m += 3;
-        if(m >= 60){
-            m -= 60;
-            h++;
-        }
-
-        let cor = Math.random() < (v/100) ? "🔴" : "⚫";
-
-        lista += `${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
+        m+=3;if(m>=60){m-=60;h++;}
+        let cor=Math.random()<0.5?"🔴":"⚫";
+        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
     }
 
-    listaGlobal = lista;
-    document.getElementById("lista").innerText = lista;
+    listaGlobal=lista;
+    document.getElementById("lista").innerText=lista;
 }
 
-// BOTÕES
 function ativarSinais(){
     if(!listaGlobal){
         alert("Gere a lista primeiro!");
         return;
     }
-    alert("🔥 Agora envie pelo Firebase");
+    alert("🔥 Agora use Firebase para envio automático!");
 }
 
 function copiarTudo(){
@@ -206,85 +193,61 @@ function copiarTudo(){
     alert("Copiado!");
 }
 
-// OCR CORRIGIDO
+// OCR
 function processarImagem(file){
 
-    if(processando) return;
-    processando = true;
+    const reader=new FileReader();
 
-    const reader = new FileReader();
+    reader.onload=function(e){
 
-    reader.onload = function(e){
+        preview.src=e.target.result;
 
-        const preview = document.getElementById("preview");
-        const canvas = document.getElementById("canvas");
-        const status = document.getElementById("status");
-        const porcentagem = document.getElementById("porcentagem");
+        let image=new Image();
 
-        preview.src = e.target.result;
+        image.onload=function(){
 
-        let image = new Image();
+            let ctx=canvas.getContext("2d");
 
-        image.onload = function(){
-
-            let ctx = canvas.getContext("2d");
-
-            canvas.width = image.width;
-            canvas.height = image.height;
+            canvas.width=image.width;
+            canvas.height=image.height;
 
             ctx.drawImage(image,0,0);
 
-            status.innerText = "🔄 Processando...";
+            status.innerText="🔄 Processando...";
 
             animarCarregamento(()=>{
 
                 Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
 
-                    console.log("OCR TEXTO:", text);
+                    let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
 
-                    let limpo = text.replace(/[^\d.\n]/g, " ");
-                    let nums = limpo.match(/\d+(\.\d+)?/g);
-
-                    let p = 50;
-                    let v = 50;
-
-                    if(nums && nums.length >= 2){
-                        p = parseFloat(nums[0]);
-                        v = parseFloat(nums[1]);
-
-                        if(p > 100 || v > 100){
-                            p = 50;
-                            v = 50;
-                        }
+                    if(!nums||nums.length<2){
+                        status.innerText="❌ Não achou %";
+                        return;
                     }
 
-                    porcentagem.innerText = `⚫ ${p}% | 🔴 ${v}%`;
+                    let p=normalizar(parseFloat(nums[0]));
+                    let v=normalizar(parseFloat(nums[1]));
+
+                    porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
 
                     gerarLista(p,v);
 
-                    status.innerText = "✅ Lista gerada";
-
-                    processando = false;
+                    status.innerText="✅ Lista gerada";
                 });
 
             });
 
         };
 
-        image.src = e.target.result;
+        image.src=e.target.result;
     };
 
     reader.readAsDataURL(file);
 }
 
-// EVENTOS (SEM DUPLICAR)
-document.getElementById("cameraInput").onchange = function(e){
-    if(e.target.files[0]) processarImagem(e.target.files[0]);
-};
-
-document.getElementById("fileInput").onchange = function(e){
-    if(e.target.files[0]) processarImagem(e.target.files[0]);
-};
+cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
+fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 
 </script>
 
