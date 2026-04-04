@@ -11,7 +11,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
-<!-- FIREBASE COMPAT -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 
@@ -84,11 +84,9 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <h2>📸 Robô Double PRO</h2>
 
-<!-- CÂMERA -->
 <label for="cameraInput" class="botao">📸 Tirar Foto</label>
 <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
 
-<!-- GALERIA -->
 <label for="fileInput" class="botao">🖼️ Galeria</label>
 <input type="file" id="fileInput" accept="image/*" style="display:none">
 
@@ -111,7 +109,7 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <script>
 
-// 🔥 FIREBASE
+// FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
   authDomain: "roboblaze-8dfde.firebaseapp.com",
@@ -123,7 +121,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// PERMISSÃO
 Notification.requestPermission().then((permission) => {
   if (permission === "granted") {
     messaging.getToken({
@@ -134,12 +131,10 @@ Notification.requestPermission().then((permission) => {
   }
 });
 
-// RECEBER COM APP ABERTO
 messaging.onMessage((payload) => {
   alert(payload.notification.title + "\n" + payload.notification.body);
 });
 
-// SERVICE WORKER
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
@@ -148,12 +143,10 @@ if ('serviceWorker' in navigator) {
 
 let listaGlobal = "";
 
-// BLAZE
 function abrirBlaze(){
     window.location.href="https://blaze.com";
 }
 
-// CARREGAMENTO
 function animarCarregamento(callback){
     let progresso = document.getElementById("progresso");
     progresso.style.width = "0%";
@@ -186,7 +179,7 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText=lista;
 }
 
-// ATIVAR
+// BOTÕES
 function ativarSinais(){
     if(!listaGlobal){
         alert("Gere a lista primeiro!");
@@ -195,13 +188,12 @@ function ativarSinais(){
     alert("🔥 Agora envie pelo Firebase");
 }
 
-// COPIAR
 function copiarTudo(){
     navigator.clipboard.writeText(listaGlobal);
     alert("Copiado!");
 }
 
-// OCR
+// OCR MELHORADO
 function processarImagem(file){
 
     const reader=new FileReader();
@@ -227,15 +219,25 @@ function processarImagem(file){
 
                 Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
 
-                    let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
+                    console.log("OCR TEXTO:", text);
 
-                    if(!nums||nums.length<2){
-                        status.innerText="❌ Não achou %";
+                    // LIMPA TEXTO
+                    let limpo = text.replace(/[^\d.\n]/g, " ");
+
+                    let nums = limpo.match(/\d+(\.\d+)?/g);
+
+                    if(!nums || nums.length < 2){
+                        status.innerText = "❌ Não encontrou números";
                         return;
                     }
 
-                    let p=parseFloat(nums[0]);
-                    let v=parseFloat(nums[1]);
+                    let p = parseFloat(nums[0]);
+                    let v = parseFloat(nums[1]);
+
+                    if(p > 100 || v > 100){
+                        status.innerText = "❌ Valores inválidos";
+                        return;
+                    }
 
                     porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
 
