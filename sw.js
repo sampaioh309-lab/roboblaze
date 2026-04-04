@@ -1,19 +1,17 @@
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => self.clients.claim());
 
-firebase.initializeApp({
-  apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
-  authDomain: "roboblaze-8dfde.firebaseapp.com",
-  projectId: "roboblaze-8dfde",
-  messagingSenderId: "88914971613",
-  appId: "1:88914971613:web:a04143458a9ea4fdac0434"
-});
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
 
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage(function(payload) {
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
-    icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png"
-  });
+    event.waitUntil(
+        clients.matchAll({type: "window"}).then(clientList => {
+            for (let client of clientList) {
+                if (client.url && "focus" in client)
+                    return client.focus();
+            }
+            if (clients.openWindow)
+                return clients.openWindow("/");
+        })
+    );
 });
