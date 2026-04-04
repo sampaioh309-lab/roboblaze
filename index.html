@@ -4,10 +4,8 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Robô Double PRO</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#020617">
 
@@ -48,6 +46,10 @@ button{
     font-weight:bold;
 }
 
+#blaze{
+    background:#facc15;
+}
+
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 #barra{height:16px;background:#020617;border:1px solid #334155;border-radius:20px;overflow:hidden;margin-top:10px}
@@ -56,9 +58,25 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 #status{text-align:center;margin-top:8px}
 #porcentagem{text-align:center;margin-top:5px}
 
+#contador{
+    text-align:center;
+    margin-top:10px;
+    font-size:18px;
+    color:#facc15;
+}
+
 #lista{
     white-space:pre-line;
     margin-top:10px;
+    background:#020617;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:10px;
+}
+
+#recomendacoes{
+    margin-top:10px;
+    font-size:13px;
     background:#020617;
     border:1px solid #334155;
     border-radius:12px;
@@ -75,7 +93,7 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <h2>📸 Robô Double PRO</h2>
 
 <button onclick="abrirCamera()">📸 Tirar Foto</button>
-<button onclick="abrirGaleria()">🖼️ Escolher da Galeria</button>
+<button onclick="abrirGaleria()">🖼️ Galeria</button>
 
 <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="fileInput" accept="image/*" style="display:none">
@@ -88,242 +106,211 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <p id="status">Aguardando imagem...</p>
 <p id="porcentagem"></p>
 
+<div id="contador"></div>
+
 <div id="lista"></div>
 
 <button onclick="copiarTudo()">📋 Copiar Lista</button>
+<button onclick="ativarSinais()">🚀 Ativar Sinais</button>
+<button id="blaze" onclick="abrirBlaze()">🌐 Abrir Blaze</button>
+
+<div id="recomendacoes">
+<b>📋 RECOMENDAÇÕES</b><br><br>
+• Entrar até G1<br>
+• Evitar sequência de 4 iguais<br>
+• NÃO entrar após branco ⚪
+</div>
 
 </div>
 
 <script>
 
-// 🔊 SOM
+let listaGlobal = "";
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
-// ================= NOTIFICAÇÃO =================
-
-function pedirPermissao(){
-    if(Notification.permission !== "granted"){
-        Notification.requestPermission();
-    }
-}
-
+// ================= ALERTA =================
 function alertar(texto){
-
     audio.play().catch(()=>{});
+    if(navigator.vibrate) navigator.vibrate([300,200,300,600]);
 
-    if(navigator.vibrate){
-        navigator.vibrate(500);
-    }
+    document.body.style.background="#7f1d1d";
+    setTimeout(()=>{document.body.style.background=""},1000);
 
-    if(Notification.permission === "granted"){
-        new Notification("🚨 SINAL DOUBLE", { body: texto });
-    }
-
-    alert(texto);
+    alert("🚨 "+texto);
 }
 
 // ================= BOTÕES =================
-
-function abrirCamera(){
-    document.getElementById("cameraInput").click();
-}
-
-function abrirGaleria(){
-    document.getElementById("fileInput").click();
-}
+function abrirCamera(){document.getElementById("cameraInput").click();}
+function abrirGaleria(){document.getElementById("fileInput").click();}
+function abrirBlaze(){window.location.href="https://blaze.com";}
 
 // ================= LÓGICA =================
+function normalizar(v){if(v>100)v=v/10;return v;}
 
-function normalizar(v){
-    if(v > 100) v = v / 10;
-    return v;
-}
-
-function gerarCores(preto, vermelho){
-    let total = preto + vermelho;
-    let proporcaoV = vermelho / total;
-    let cores = [];
-
+function gerarCores(p,v){
+    let total=p+v;
+    let prob=v/total;
+    let cores=[];
     for(let i=0;i<10;i++){
-        cores.push(Math.random() < proporcaoV ? "🔴" : "⚫");
+        cores.push(Math.random()<prob?"🔴":"⚫");
     }
-
     return cores;
 }
 
-function gerarLista(preto, vermelho){
-
-    let cores = gerarCores(preto, vermelho);
-
-    let agora = new Date();
-    let h = agora.getHours();
-    let m = agora.getMinutes();
-
-    let lista = "";
+function gerarLista(p,v){
+    let cores=gerarCores(p,v);
+    let d=new Date();
+    let h=d.getHours(),m=d.getMinutes();
+    let lista="";
 
     for(let i=0;i<cores.length;i++){
-
-        m += 3;
-        if(m >= 60){ m -= 60; h++; }
-
-        let mm = m.toString().padStart(2,'0');
-
-        lista += `${h}:${mm} → ${cores[i]}+⚪️\n`;
+        m+=3;if(m>=60){m-=60;h++;}
+        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cores[i]}+⚪️\n`;
     }
-
     return lista;
 }
 
-// ================= AGENDAR =================
+// ================= CONTADOR =================
+function iniciarContador(h,m){
+    let alvo=new Date();
+    alvo.setHours(h,m,0,0);
 
+    let intervalo=setInterval(()=>{
+        let agora=new Date();
+        let diff=alvo-agora;
+
+        if(diff<=0){
+            clearInterval(intervalo);
+            document.getElementById("contador").innerText="🚨 AGORA!";
+            return;
+        }
+
+        let min=Math.floor(diff/60000);
+        let seg=Math.floor((diff%60000)/1000);
+
+        document.getElementById("contador").innerText =
+            `⏳ Próximo sinal em ${min}m ${seg}s`;
+
+    },1000);
+}
+
+// ================= AGENDAR =================
 function agendarSinais(lista){
 
-    let linhas = lista.split("\n");
+    let linhas=lista.split("\n");
 
-    linhas.forEach(linha => {
+    linhas.forEach((linha,i)=>{
 
         if(!linha) return;
 
-        let partes = linha.split(" → ");
-        let horario = partes[0];
-        let sinal = partes[1];
+        let [horario,sinal]=linha.split(" → ");
+        let [h,m]=horario.split(":");
 
-        let agora = new Date();
-        let [h, m] = horario.split(":");
+        let alvo=new Date();
+        alvo.setHours(h,m,0,0);
 
-        let dataAlvo = new Date();
-        dataAlvo.setHours(parseInt(h), parseInt(m), 0, 0);
+        let aviso=new Date(alvo.getTime()-60000);
+        let delay=aviso-new Date();
 
-        let dataNotificacao = new Date(dataAlvo.getTime() - 60000);
+        if(i===0) iniciarContador(h,m);
 
-        let delay = dataNotificacao - agora;
+        let texto=`${horario} apostar ${sinal}`;
 
-        let texto = `${horario} apostar ${sinal}`;
-
-        if(delay <= 0){
+        if(delay<=0){
             alertar(texto);
-        } else {
-            setTimeout(() => alertar(texto), delay);
+        }else{
+            setTimeout(()=>alertar(texto),delay);
         }
-
     });
 }
 
-// ================= BARRA =================
-
-function carregarBarra(callback){
-
-    let progresso = document.getElementById("progresso");
-    let valor = 0;
-
-    let intervalo = setInterval(()=>{
-
-        valor += 4;
-        progresso.style.width = valor + "%";
-
-        if(valor >= 100){
-            clearInterval(intervalo);
-            callback();
-        }
-
-    }, 80);
-}
-
 // ================= COPIAR =================
-
 function copiarTudo(){
-    let lista = document.getElementById("lista").innerText;
-    navigator.clipboard.writeText(lista);
+    let lista=document.getElementById("lista").innerText;
+    let rec=document.getElementById("recomendacoes").innerText;
+    navigator.clipboard.writeText(lista+"\n\n"+rec);
     alert("Copiado!");
 }
 
-// ================= PROCESSAR IMAGEM =================
+// ================= ATIVAR =================
+function ativarSinais(){
+    if(!listaGlobal){
+        alert("Gere a lista primeiro!");
+        return;
+    }
+    alert("🚀 Sinais ativados!");
+    agendarSinais(listaGlobal);
+}
 
+// ================= OCR =================
 function processarImagem(file){
 
-    pedirPermissao();
+    const reader=new FileReader();
 
-    const reader = new FileReader();
+    reader.onload=function(e){
 
-    reader.onload = function(e){
+        preview.src=e.target.result;
 
-        let img = document.getElementById("preview");
-        img.src = e.target.result;
+        let image=new Image();
 
-        let image = new Image();
+        image.onload=function(){
 
-        image.onload = function(){
+            let ctx=canvas.getContext("2d");
 
-            let canvas = document.getElementById("canvas");
-            let ctx = canvas.getContext("2d");
+            let scale=image.width>800?800/image.width:1;
 
-            let maxWidth = 800;
-            let scale = image.width > maxWidth ? maxWidth / image.width : 1;
+            canvas.width=image.width*scale;
+            canvas.height=image.height*scale;
 
-            canvas.width = image.width * scale;
-            canvas.height = image.height * scale;
+            ctx.drawImage(image,0,0,canvas.width,canvas.height);
 
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+            let data=imgData.data;
 
-            let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-            let data = imgData.data;
-
-            for(let i=0; i<data.length; i+=4){
-                let media = (data[i]+data[i+1]+data[i+2])/3;
-                let cor = media > 140 ? 255 : 0;
+            for(let i=0;i<data.length;i+=4){
+                let media=(data[i]+data[i+1]+data[i+2])/3;
+                let cor=media>140?255:0;
                 data[i]=data[i+1]=data[i+2]=cor;
             }
 
             ctx.putImageData(imgData,0,0);
 
-            document.getElementById("status").innerText = "🔍 Lendo imagem...";
+            status.innerText="🔍 Lendo imagem...";
 
-            carregarBarra(()=>{
+            Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
 
-                Tesseract.recognize(canvas, 'eng').then(({ data: { text } }) => {
+                let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
 
-                    let porcentagens = text.match(/\d+(\.\d+)?(?=\s*%)/g);
+                if(!nums||nums.length<2){
+                    status.innerText="❌ Não achou %";
+                    return;
+                }
 
-                    if (!porcentagens || porcentagens.length < 2){
-                        document.getElementById("status").innerText = "❌ Não achou %";
-                        return;
-                    }
+                let p=normalizar(parseFloat(nums[0]));
+                let v=normalizar(parseFloat(nums[1]));
 
-                    let preto = normalizar(parseFloat(porcentagens[0]));
-                    let vermelho = normalizar(parseFloat(porcentagens[1]));
-                    let branco = porcentagens[2] ? normalizar(parseFloat(porcentagens[2])) : 0;
+                porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
 
-                    document.getElementById("porcentagem").innerText =
-                        `⚫ ${preto}% | 🔴 ${vermelho}% | ⚪ ${branco}%`;
+                let lista=gerarLista(p,v);
+                listaGlobal=lista;
 
-                    let lista = gerarLista(preto, vermelho);
+                listaDiv=document.getElementById("lista");
+                listaDiv.innerText=lista;
 
-                    document.getElementById("lista").innerText = lista;
-                    document.getElementById("status").innerText = "✅ Sinais prontos";
-
-                    agendarSinais(lista);
-
-                });
-
+                status.innerText="✅ Sinais prontos";
             });
 
         };
 
-        image.src = e.target.result;
+        image.src=e.target.result;
     };
 
     reader.readAsDataURL(file);
 }
 
-// ================= EVENTOS =================
-
-document.getElementById("cameraInput").addEventListener("change", e=>{
-    if(e.target.files[0]) processarImagem(e.target.files[0]);
-});
-
-document.getElementById("fileInput").addEventListener("change", e=>{
-    if(e.target.files[0]) processarImagem(e.target.files[0]);
-});
+// eventos
+cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
+fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 
 </script>
 
