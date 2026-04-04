@@ -11,6 +11,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
+<!-- FIREBASE COMPAT -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
@@ -105,12 +109,9 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 </div>
 
-<script type="module">
+<script>
 
-// FIREBASE
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js";
-
+// 🔥 FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
   authDomain: "roboblaze-8dfde.firebaseapp.com",
@@ -119,13 +120,13 @@ const firebaseConfig = {
   appId: "1:88914971613:web:a04143458a9ea4fdac0434"
 };
 
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
 
 // PERMISSÃO
 Notification.requestPermission().then((permission) => {
   if (permission === "granted") {
-    getToken(messaging, {
+    messaging.getToken({
       vapidKey: "BMQ-zkZ9SLHAlRY0Mmy6F4Srf468OZl0VVL0qn9B-Bc11bQz-hy-gX7LNB9XoHHD5XIciMVwyYoRcyBm9ZoXb3E"
     }).then((token) => {
       console.log("TOKEN:", token);
@@ -134,7 +135,7 @@ Notification.requestPermission().then((permission) => {
 });
 
 // RECEBER COM APP ABERTO
-onMessage(messaging, (payload) => {
+messaging.onMessage((payload) => {
   alert(payload.notification.title + "\n" + payload.notification.body);
 });
 
@@ -147,7 +148,7 @@ if ('serviceWorker' in navigator) {
 
 let listaGlobal = "";
 
-// ABRIR BLAZE
+// BLAZE
 function abrirBlaze(){
     window.location.href="https://blaze.com";
 }
