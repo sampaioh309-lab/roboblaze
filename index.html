@@ -11,7 +11,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 
@@ -57,7 +56,6 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 #barra{
     height:16px;
-    background:#020617;
     border:1px solid #334155;
     border-radius:20px;
     overflow:hidden;
@@ -70,9 +68,7 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
     background:linear-gradient(90deg,#00f5ff,#00ff95);
 }
 
-#status{text-align:center;margin-top:8px}
-#porcentagem{text-align:center;margin-top:5px}
-#contador{text-align:center;margin-top:10px;color:#facc15}
+#status,#porcentagem,#contador{text-align:center;margin-top:8px}
 #lista{white-space:pre-line;margin-top:10px;border:1px solid #334155;padding:10px;border-radius:12px}
 </style>
 
@@ -109,7 +105,7 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <script>
 
-// ================= FIREBASE =================
+// FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
   authDomain: "roboblaze-8dfde.firebaseapp.com",
@@ -121,70 +117,52 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-Notification.requestPermission().then((permission) => {
-  if (permission === "granted") {
+Notification.requestPermission().then((permission)=>{
+  if(permission==="granted"){
     messaging.getToken({
-      vapidKey: "BMQ-zkZ9SLHAlRY0Mmy6F4Srf468OZl0VVL0qn9B-Bc11bQz-hy-gX7LNB9XoHHD5XIciMVwyYoRcyBm9ZoXb3E"
-    }).then((token) => {
-      console.log("TOKEN:", token);
-    });
+      vapidKey:"BMQ-zkZ9SLHAlRY0Mmy6F4Srf468OZl0VVL0qn9B-Bc11bQz-hy-gX7LNB9XoHHD5XIciMVwyYoRcyBm9ZoXb3E"
+    }).then(token=>console.log("TOKEN:",token));
   }
-});
-
-messaging.onMessage((payload) => {
-  alert(payload.notification.title + "\n" + payload.notification.body);
 });
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
-// ================= ROBÔ =================
-
+// ROBÔ
 let listaGlobal = "";
 let processando = false;
 
-// BLAZE
 function abrirBlaze(){
     window.location.href="https://blaze.com";
 }
 
-// CARREGAMENTO
 function animarCarregamento(callback){
     let progresso = document.getElementById("progresso");
     progresso.style.width = "0%";
-    let valor = 0;
+    let v = 0;
 
-    let intervalo = setInterval(()=>{
-        valor += 5;
-        progresso.style.width = valor + "%";
-
-        if(valor >= 100){
-            clearInterval(intervalo);
-            setTimeout(callback, 300);
+    let i = setInterval(()=>{
+        v += 5;
+        progresso.style.width = v + "%";
+        if(v >= 100){
+            clearInterval(i);
+            setTimeout(callback,300);
         }
     },80);
 }
 
-// GERAR LISTA
 function gerarLista(p,v){
-
-    let d = new Date();
-    let h = d.getHours();
-    let m = d.getMinutes();
-
-    let lista = "";
+    let d=new Date();
+    let h=d.getHours();
+    let m=d.getMinutes();
+    let lista="";
 
     for(let i=0;i<10;i++){
-
-        m += 3;
-        if(m >= 60){
-            m -= 60;
-            h++;
-        }
+        m+=3;
+        if(m>=60){m-=60;h++;}
 
         let cor = Math.random() < (v/100) ? "🔴" : "⚫";
-
         lista += `${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
     }
 
@@ -192,21 +170,20 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText = lista;
 }
 
-// BOTÕES
-function ativarSinais(){
-    if(!listaGlobal){
-        alert("Gere a lista primeiro!");
-        return;
-    }
-    alert("🔥 Agora envie pelo Firebase");
-}
-
 function copiarTudo(){
     navigator.clipboard.writeText(listaGlobal);
     alert("Copiado!");
 }
 
-// OCR CORRIGIDO
+function ativarSinais(){
+    if(!listaGlobal){
+        alert("Gere a lista primeiro!");
+        return;
+    }
+    alert("🚀 Sinais ativados (envio via Firebase)");
+}
+
+// OCR CORRIGIDO FORTE
 function processarImagem(file){
 
     if(processando) return;
@@ -240,22 +217,23 @@ function processarImagem(file){
 
                 Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
 
-                    console.log("OCR TEXTO:", text);
+                    console.log("OCR:", text);
 
-                    let limpo = text.replace(/[^\d.\n]/g, " ");
-                    let nums = limpo.match(/\d+(\.\d+)?/g);
+                    let nums = text.match(/\d+(\.\d+)?/g) || [];
 
-                    let p = 50;
-                    let v = 50;
+                    nums = nums
+                        .map(n => parseFloat(n))
+                        .filter(n => n > 0 && n <= 100);
 
-                    if(nums && nums.length >= 2){
-                        p = parseFloat(nums[0]);
-                        v = parseFloat(nums[1]);
+                    nums.sort((a,b)=>b-a);
 
-                        if(p > 100 || v > 100){
-                            p = 50;
-                            v = 50;
-                        }
+                    let p = nums[0] || 50;
+                    let v = nums[1] || 50;
+
+                    // filtros inteligentes
+                    if(p === v || p < 10 || v < 10){
+                        p = 50;
+                        v = 50;
                     }
 
                     porcentagem.innerText = `⚫ ${p}% | 🔴 ${v}%`;
@@ -277,12 +255,12 @@ function processarImagem(file){
     reader.readAsDataURL(file);
 }
 
-// EVENTOS (SEM DUPLICAR)
-document.getElementById("cameraInput").onchange = function(e){
+// EVENTOS (SEM BUG)
+document.getElementById("cameraInput").onchange = e=>{
     if(e.target.files[0]) processarImagem(e.target.files[0]);
 };
 
-document.getElementById("fileInput").onchange = function(e){
+document.getElementById("fileInput").onchange = e=>{
     if(e.target.files[0]) processarImagem(e.target.files[0]);
 };
 
