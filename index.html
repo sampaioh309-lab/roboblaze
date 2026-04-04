@@ -7,6 +7,7 @@
 <title>Robô Double PRO</title>
 
 <meta name="theme-color" content="#020617">
+<link rel="manifest" href="manifest.json">
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
@@ -107,6 +108,11 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <script>
 
+// 🔥 SERVICE WORKER
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+
 let listaGlobal = "";
 let sinaisGlobais = [];
 let loopAtivo = false;
@@ -118,15 +124,6 @@ if ("Notification" in window) {
     Notification.requestPermission();
 }
 
-// VOZ
-function falar(texto){
-    try{
-        let msg = new SpeechSynthesisUtterance(texto);
-        msg.lang = "pt-BR";
-        speechSynthesis.speak(msg);
-    }catch(e){}
-}
-
 // ALERTA
 function alertar(texto){
 
@@ -135,8 +132,6 @@ function alertar(texto){
     if(navigator.vibrate){
         navigator.vibrate([300,200,300,600]);
     }
-
-    falar(texto);
 
     if ("Notification" in window && Notification.permission === "granted") {
         new Notification("🚨 ROBÔ DOUBLE", {
@@ -150,7 +145,11 @@ function alertar(texto){
 // BOTÕES
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
-function abrirBlaze(){window.location.href="https://blaze.com";}
+
+// 🔥 ABRE FORA DO APP (IMPORTANTE)
+function abrirBlaze(){
+    window.open("https://blaze.com", "_blank");
+}
 
 // LÓGICA
 function normalizar(v){if(v>100)v=v/10;return v;}
@@ -186,11 +185,6 @@ function ativarSinais(){
     if(!listaGlobal){
         alert("Gere a lista primeiro!");
         return;
-    }
-
-    // 🔥 ENVIA PRO APP ANDROID
-    if(typeof Android !== "undefined"){
-        Android.enviarSinais(listaGlobal);
     }
 
     let linhas = listaGlobal.split("\n");
@@ -251,11 +245,13 @@ function iniciarLoop(){
 
             let diff = s.alvo - agora;
 
+            // 1 MINUTO
             if(diff <= 60000 && diff > 59000 && !s.aviso1){
                 alertar(`Falta 1 minuto! ${s.horario} apostar ${s.sinal}`);
                 s.aviso1 = true;
             }
 
+            // 10 SEGUNDOS
             if(diff <= 10000 && diff > 9000 && !s.aviso2){
                 alertar(`ATENÇÃO! ${s.horario} apostar ${s.sinal}`);
                 s.aviso2 = true;
@@ -340,4 +336,4 @@ fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 </script>
 
 </body>
-  </html>
+    </html>
