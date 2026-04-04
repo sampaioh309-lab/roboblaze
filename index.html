@@ -50,6 +50,21 @@ button{
 
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
+#barra{
+    height:16px;
+    background:#020617;
+    border:1px solid #334155;
+    border-radius:20px;
+    overflow:hidden;
+    margin-top:10px;
+}
+
+#progresso{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#00f5ff,#00ff95);
+}
+
 #status{text-align:center;margin-top:8px}
 #porcentagem{text-align:center;margin-top:5px}
 #contador{text-align:center;margin-top:10px;color:#facc15}
@@ -73,6 +88,8 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <img id="preview">
 <canvas id="canvas"></canvas>
 
+<div id="barra"><div id="progresso"></div></div>
+
 <p id="status">Aguardando imagem...</p>
 <p id="porcentagem"></p>
 <p id="contador"></p>
@@ -90,14 +107,13 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 let listaGlobal = "";
 const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
 
-// 🔥 SERVICE WORKER
+// SERVICE WORKER
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
 
-// ================= ALERTA =================
+// ALERTA
 function alertar(texto){
-
     audio.play().catch(()=>{});
     if(navigator.vibrate) navigator.vibrate([300,200,300,600]);
 
@@ -112,12 +128,30 @@ function alertar(texto){
     document.getElementById("status").innerText = "🚨 " + texto;
 }
 
-// ================= BOTÕES =================
+// BOTÕES
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 function abrirBlaze(){window.location.href="https://blaze.com";}
 
-// ================= LÓGICA =================
+// CARREGAMENTO
+function animarCarregamento(callback){
+    let progresso = document.getElementById("progresso");
+    progresso.style.width = "0%";
+
+    let valor = 0;
+
+    let intervalo = setInterval(()=>{
+        valor += 5;
+        progresso.style.width = valor + "%";
+
+        if(valor >= 100){
+            clearInterval(intervalo);
+            setTimeout(callback, 300);
+        }
+    }, 80);
+}
+
+// LÓGICA
 function normalizar(v){if(v>100)v=v/10;return v;}
 
 function gerarCores(p,v){
@@ -145,13 +179,10 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText=lista;
 }
 
-// ================= CONTADOR =================
-function iniciarContador(h,m){
-    let alvo=new Date();
-    alvo.setHours(h,m,0,0);
-
+// CONTADOR
+function iniciarContador(dataAlvo){
     setInterval(()=>{
-        let diff=alvo-new Date();
+        let diff=dataAlvo-new Date();
         if(diff<=0) return;
 
         let min=Math.floor(diff/60000);
@@ -162,12 +193,13 @@ function iniciarContador(h,m){
     },1000);
 }
 
-// ================= AGENDAR =================
+// AGENDAR TODOS
 function agendarSinais(lista){
 
     let linhas = lista.split("\n");
+    let proximos = [];
 
-    linhas.forEach((linha,i)=>{
+    linhas.forEach((linha)=>{
 
         if(!linha) return;
 
@@ -186,35 +218,38 @@ function agendarSinais(lista){
 
         let texto = `Às ${horario} apostar no ${sinal}`;
 
-        if(i===0) iniciarContador(h,m);
-
         setTimeout(()=>{
             alertar(texto);
         }, delay);
 
+        proximos.push(alvo);
     });
+
+    if(proximos.length > 0){
+        proximos.sort((a,b)=>a-b);
+        iniciarContador(proximos[0]);
+    }
 
     document.getElementById("status").innerText = "🚀 Sinais ativados!";
 }
 
-// ================= ATIVAR =================
+// ATIVAR
 function ativarSinais(){
     if(!listaGlobal){
         alert("Gere a lista primeiro!");
         return;
     }
-
     agendarSinais(listaGlobal);
 }
 
-// ================= COPIAR =================
+// COPIAR
 function copiarTudo(){
     let lista=document.getElementById("lista").innerText;
     navigator.clipboard.writeText(lista);
     alert("Copiado!");
 }
 
-// ================= OCR =================
+// OCR
 function processarImagem(file){
 
     const reader=new FileReader();
@@ -247,25 +282,29 @@ function processarImagem(file){
 
             ctx.putImageData(imgData,0,0);
 
-            status.innerText="🔍 Lendo imagem...";
+            status.innerText="🔄 Processando...";
 
-            Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
+            animarCarregamento(()=>{
 
-                let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
+                Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
 
-                if(!nums||nums.length<2){
-                    status.innerText="❌ Não achou %";
-                    return;
-                }
+                    let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
 
-                let p=normalizar(parseFloat(nums[0]));
-                let v=normalizar(parseFloat(nums[1]));
+                    if(!nums||nums.length<2){
+                        status.innerText="❌ Não achou %";
+                        return;
+                    }
 
-                porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
+                    let p=normalizar(parseFloat(nums[0]));
+                    let v=normalizar(parseFloat(nums[1]));
 
-                gerarLista(p,v);
+                    porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
 
-                status.innerText="✅ Lista gerada";
+                    gerarLista(p,v);
+
+                    status.innerText="✅ Lista gerada";
+                });
+
             });
 
         };
@@ -283,4 +322,4 @@ fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 </script>
 
 </body>
-</html>
+    </html>
