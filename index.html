@@ -7,7 +7,7 @@
 
 <title>Robô Double PRO</title>
 
-<!-- 🔥 PWA -->
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#020617">
 
@@ -37,14 +37,15 @@ body{
 
 h2{text-align:center;color:#38bdf8;margin-bottom:10px}
 
-input{
+button{
     width:100%;
-    margin:10px 0;
-    padding:10px;
-    background:#020617;
-    border:1px solid #334155;
-    color:#fff;
-    border-radius:10px
+    padding:12px;
+    margin-top:8px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg,#00f5ff,#00ff95);
+    color:#000;
+    font-weight:bold;
 }
 
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
@@ -63,17 +64,6 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
     border-radius:12px;
     padding:10px;
 }
-
-button{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border:none;
-    border-radius:12px;
-    background:linear-gradient(90deg,#00f5ff,#00ff95);
-    color:#000;
-    font-weight:bold;
-}
 </style>
 
 </head>
@@ -84,7 +74,11 @@ button{
 
 <h2>📸 Robô Double PRO</h2>
 
-<input type="file" id="upload" accept="image/*" capture="environment">
+<button onclick="abrirCamera()">📸 Tirar Foto</button>
+<button onclick="abrirGaleria()">🖼️ Escolher da Galeria</button>
+
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="fileInput" accept="image/*" style="display:none">
 
 <img id="preview">
 <canvas id="canvas"></canvas>
@@ -114,21 +108,28 @@ function pedirPermissao(){
 }
 
 function alertar(texto){
-    // 🔊 som
+
     audio.play().catch(()=>{});
 
-    // 📳 vibração
     if(navigator.vibrate){
         navigator.vibrate(500);
     }
 
-    // 🔔 notificação
     if(Notification.permission === "granted"){
         new Notification("🚨 SINAL DOUBLE", { body: texto });
     }
 
-    // fallback visual
     alert(texto);
+}
+
+// ================= BOTÕES =================
+
+function abrirCamera(){
+    document.getElementById("cameraInput").click();
+}
+
+function abrirGaleria(){
+    document.getElementById("fileInput").click();
 }
 
 // ================= LÓGICA =================
@@ -236,12 +237,9 @@ function copiarTudo(){
     alert("Copiado!");
 }
 
-// ================= OCR =================
+// ================= PROCESSAR IMAGEM =================
 
-document.getElementById("upload").addEventListener("change", function(e){
-
-    const file = e.target.files[0];
-    if(!file) return;
+function processarImagem(file){
 
     pedirPermissao();
 
@@ -315,7 +313,16 @@ document.getElementById("upload").addEventListener("change", function(e){
     };
 
     reader.readAsDataURL(file);
+}
 
+// ================= EVENTOS =================
+
+document.getElementById("cameraInput").addEventListener("change", e=>{
+    if(e.target.files[0]) processarImagem(e.target.files[0]);
+});
+
+document.getElementById("fileInput").addEventListener("change", e=>{
+    if(e.target.files[0]) processarImagem(e.target.files[0]);
 });
 
 </script>
