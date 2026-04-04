@@ -102,150 +102,94 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 </div>
 
-<script>
+<script type="module">
 
-let listaGlobal = "";
-const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
+// FIREBASE
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
+  authDomain: "roboblaze-8dfde.firebaseapp.com",
+  projectId: "roboblaze-8dfde",
+  storageBucket: "roboblaze-8dfde.firebasestorage.app",
+  messagingSenderId: "88914971613",
+  appId: "1:88914971613:web:a04143458a9ea4fdac0434"
+};
+
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+// PERMISSÃO
+Notification.requestPermission().then((permission) => {
+  if (permission === "granted") {
+    getToken(messaging, {
+      vapidKey: "BMQ-zkZ9SLHAlRY0Mmy6F4Srf468OZl0VVL0qn9B-Bc11bQz-hy-gX7LNB9XoHHD5XIciMVwyYoRcyBm9ZoXb3E"
+    }).then((token) => {
+      console.log("TOKEN:", token);
+    });
+  }
+});
+
+// RECEBER COM APP ABERTO
+onMessage(messaging, (payload) => {
+  alert(payload.notification.title + "\n" + payload.notification.body);
+});
 
 // SERVICE WORKER
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.register('sw.js');
 }
 
-// ALERTA
-function alertar(texto){
-    audio.play().catch(()=>{});
-    if(navigator.vibrate) navigator.vibrate([300,200,300,600]);
+// ================= RESTO DO ROBÔ =================
 
-    navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification("🚨 ROBÔ DOUBLE", {
-            body: texto,
-            icon: "https://cdn-icons-png.flaticon.com/512/3523/3523887.png",
-            vibrate: [300,200,300]
-        });
-    });
+let listaGlobal = "";
 
-    document.getElementById("status").innerText = "🚨 " + texto;
-}
-
-// BOTÕES
 function abrirCamera(){cameraInput.click();}
 function abrirGaleria(){fileInput.click();}
 function abrirBlaze(){window.location.href="https://blaze.com";}
 
-// CARREGAMENTO
 function animarCarregamento(callback){
     let progresso = document.getElementById("progresso");
-    progresso.style.width = "0%";
-
     let valor = 0;
 
     let intervalo = setInterval(()=>{
         valor += 5;
         progresso.style.width = valor + "%";
-
         if(valor >= 100){
             clearInterval(intervalo);
             setTimeout(callback, 300);
         }
-    }, 80);
+    },80);
 }
 
-// LÓGICA
 function normalizar(v){if(v>100)v=v/10;return v;}
 
-function gerarCores(p,v){
-    let total=p+v;
-    let prob=v/total;
-    let cores=[];
-    for(let i=0;i<10;i++){
-        cores.push(Math.random()<prob?"🔴":"⚫");
-    }
-    return cores;
-}
-
 function gerarLista(p,v){
-    let cores=gerarCores(p,v);
     let d=new Date();
     let h=d.getHours(),m=d.getMinutes();
     let lista="";
 
-    for(let i=0;i<cores.length;i++){
+    for(let i=0;i<10;i++){
         m+=3;if(m>=60){m-=60;h++;}
-        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cores[i]}+⚪️\n`;
+        let cor=Math.random()<0.5?"🔴":"⚫";
+        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
     }
 
     listaGlobal=lista;
     document.getElementById("lista").innerText=lista;
 }
 
-// CONTADOR
-function iniciarContador(dataAlvo){
-    setInterval(()=>{
-        let diff=dataAlvo-new Date();
-        if(diff<=0) return;
-
-        let min=Math.floor(diff/60000);
-        let seg=Math.floor((diff%60000)/1000);
-
-        document.getElementById("contador").innerText =
-        `⏳ Próximo sinal em ${min}m ${seg}s`;
-    },1000);
-}
-
-// AGENDAR TODOS
-function agendarSinais(lista){
-
-    let linhas = lista.split("\n");
-    let proximos = [];
-
-    linhas.forEach((linha)=>{
-
-        if(!linha) return;
-
-        let [horario,sinal] = linha.split(" → ");
-        let [h,m] = horario.split(":");
-
-        let agora = new Date();
-
-        let alvo = new Date();
-        alvo.setHours(h,m,0,0);
-
-        if(alvo < agora) return;
-
-        let aviso = new Date(alvo.getTime() - 60000);
-        let delay = aviso - agora;
-
-        let texto = `Às ${horario} apostar no ${sinal}`;
-
-        setTimeout(()=>{
-            alertar(texto);
-        }, delay);
-
-        proximos.push(alvo);
-    });
-
-    if(proximos.length > 0){
-        proximos.sort((a,b)=>a-b);
-        iniciarContador(proximos[0]);
-    }
-
-    document.getElementById("status").innerText = "🚀 Sinais ativados!";
-}
-
-// ATIVAR
 function ativarSinais(){
     if(!listaGlobal){
         alert("Gere a lista primeiro!");
         return;
     }
-    agendarSinais(listaGlobal);
+    alert("🔥 Agora use Firebase para envio automático!");
 }
 
-// COPIAR
 function copiarTudo(){
-    let lista=document.getElementById("lista").innerText;
-    navigator.clipboard.writeText(lista);
+    navigator.clipboard.writeText(listaGlobal);
     alert("Copiado!");
 }
 
@@ -264,23 +208,10 @@ function processarImagem(file){
 
             let ctx=canvas.getContext("2d");
 
-            let scale=image.width>800?800/image.width:1;
+            canvas.width=image.width;
+            canvas.height=image.height;
 
-            canvas.width=image.width*scale;
-            canvas.height=image.height*scale;
-
-            ctx.drawImage(image,0,0,canvas.width,canvas.height);
-
-            let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-            let data=imgData.data;
-
-            for(let i=0;i<data.length;i+=4){
-                let media=(data[i]+data[i+1]+data[i+2])/3;
-                let cor=media>140?255:0;
-                data[i]=data[i+1]=data[i+2]=cor;
-            }
-
-            ctx.putImageData(imgData,0,0);
+            ctx.drawImage(image,0,0);
 
             status.innerText="🔄 Processando...";
 
@@ -315,7 +246,6 @@ function processarImagem(file){
     reader.readAsDataURL(file);
 }
 
-// eventos
 cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
 
