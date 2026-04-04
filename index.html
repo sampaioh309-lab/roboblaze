@@ -97,8 +97,7 @@ function pedirPermissao(){
 function enviarNotificacao(texto){
     if(Notification.permission === "granted"){
         new Notification("🚨 SINAL DOUBLE", {
-            body: texto,
-            icon: "https://cdn-icons-png.flaticon.com/512/3522/3522092.png"
+            body: texto
         });
     }
 }
@@ -143,7 +142,7 @@ function gerarLista(preto, vermelho){
     return lista;
 }
 
-// ================= AGENDAR SINAIS (ATUALIZADO) =================
+// ================= AGENDAR SINAIS =================
 
 function agendarSinais(lista){
 
@@ -161,16 +160,15 @@ function agendarSinais(lista){
         let [h, m] = horario.split(":");
 
         let dataAlvo = new Date();
-        dataAlvo.setHours(h, m, 0, 0);
+        dataAlvo.setHours(parseInt(h), parseInt(m), 0, 0);
 
-        // 🔥 1 MINUTO ANTES
-        dataAlvo.setMinutes(dataAlvo.getMinutes() - 1);
+        // 1 MINUTO ANTES
+        let dataNotificacao = new Date(dataAlvo.getTime() - 60000);
 
-        let delay = dataAlvo - agora;
+        let delay = dataNotificacao - agora;
 
         let horaFormatada = horario.replace(":", ": ");
 
-        // 🚀 ENVIA MESMO SE JÁ PASSOU
         if(delay <= 0){
             enviarNotificacao(`${horaFormatada} apostar ${sinal}`);
         } else {
@@ -208,7 +206,7 @@ function copiarTudo(){
     alert("Copiado!");
 }
 
-// ================= OCR =================
+// ================= OCR (CORRIGIDO) =================
 
 document.getElementById("upload").addEventListener("change", function(e){
 
@@ -217,70 +215,85 @@ document.getElementById("upload").addEventListener("change", function(e){
 
     pedirPermissao();
 
-    let img = document.getElementById("preview");
-    img.src = URL.createObjectURL(file);
+    const reader = new FileReader();
 
-    let image = new Image();
+    reader.onload = function(e){
 
-    image.onload = function(){
+        let img = document.getElementById("preview");
+        img.src = e.target.result;
 
-        let canvas = document.getElementById("canvas");
-        let ctx = canvas.getContext("2d");
+        let image = new Image();
 
-        canvas.width = image.width * 2;
-        canvas.height = image.height * 2;
+        image.onload = function(){
 
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            let canvas = document.getElementById("canvas");
+            let ctx = canvas.getContext("2d");
 
-        let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-        let data = imgData.data;
+            // 🔥 REDUZ TAMANHO PRA NÃO TRAVAR
+            let maxWidth = 800;
+            let scale = 1;
 
-        for(let i=0; i<data.length; i+=4){
-            let media = (data[i]+data[i+1]+data[i+2])/3;
-            let cor = media > 140 ? 255 : 0;
-            data[i]=data[i+1]=data[i+2]=cor;
-        }
+            if(image.width > maxWidth){
+                scale = maxWidth / image.width;
+            }
 
-        ctx.putImageData(imgData,0,0);
+            canvas.width = image.width * scale;
+            canvas.height = image.height * scale;
 
-        document.getElementById("status").innerText = "🔍 Lendo imagem...";
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-        carregarBarra(()=>{
+            let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+            let data = imgData.data;
 
-            Tesseract.recognize(canvas, 'eng').then(({ data: { text } }) => {
+            for(let i=0; i<data.length; i+=4){
+                let media = (data[i]+data[i+1]+data[i+2])/3;
+                let cor = media > 140 ? 255 : 0;
+                data[i]=data[i+1]=data[i+2]=cor;
+            }
 
-                let porcentagens = text.match(/\d+(\.\d+)?(?=\s*%)/g);
+            ctx.putImageData(imgData,0,0);
 
-                if (!porcentagens || porcentagens.length < 2){
-                    document.getElementById("status").innerText = "❌ Não achou %";
-                    return;
-                }
+            document.getElementById("status").innerText = "🔍 Lendo imagem...";
 
-                let preto = normalizar(parseFloat(porcentagens[0]));
-                let vermelho = normalizar(parseFloat(porcentagens[1]));
-                let branco = porcentagens[2] ? normalizar(parseFloat(porcentagens[2])) : 0;
+            carregarBarra(()=>{
 
-                document.getElementById("porcentagem").innerText =
-                    `⚫ ${preto}% | 🔴 ${vermelho}% | ⚪ ${branco}%`;
+                Tesseract.recognize(canvas, 'eng').then(({ data: { text } }) => {
 
-                let lista = gerarLista(preto, vermelho);
+                    let porcentagens = text.match(/\d+(\.\d+)?(?=\s*%)/g);
 
-                document.getElementById("lista").innerText = lista;
-                document.getElementById("status").innerText = "✅ Sinais prontos";
+                    if (!porcentagens || porcentagens.length < 2){
+                        document.getElementById("status").innerText = "❌ Não achou %";
+                        return;
+                    }
 
-                agendarSinais(lista); // 🔥 DISPARA NOTIFICAÇÕES
+                    let preto = normalizar(parseFloat(porcentagens[0]));
+                    let vermelho = normalizar(parseFloat(porcentagens[1]));
+                    let branco = porcentagens[2] ? normalizar(parseFloat(porcentagens[2])) : 0;
+
+                    document.getElementById("porcentagem").innerText =
+                        `⚫ ${preto}% | 🔴 ${vermelho}% | ⚪ ${branco}%`;
+
+                    let lista = gerarLista(preto, vermelho);
+
+                    document.getElementById("lista").innerText = lista;
+                    document.getElementById("status").innerText = "✅ Sinais prontos";
+
+                    agendarSinais(lista);
+
+                });
 
             });
 
-        });
+        };
 
+        image.src = e.target.result;
     };
 
-    image.src = URL.createObjectURL(file);
+    reader.readAsDataURL(file);
 
 });
 
 </script>
 
 </body>
-</html>
+    </html>
