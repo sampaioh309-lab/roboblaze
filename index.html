@@ -46,6 +46,8 @@ button{
     font-weight:bold;
 }
 
+#blaze{background:#facc15;}
+
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 #status,#porcentagem,#contador{
@@ -100,6 +102,11 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <button onclick="copiarTudo()">📋 Copiar Lista</button>
 <button onclick="ativarSinais()">🚀 Ativar Sinais</button>
+
+<!-- 🔥 BOTÃO DA BLAZE (DIRETO NO DOUBLE) -->
+<a href="https://blaze.com/pt/games/double" target="_blank" rel="external">
+    <button id="blaze">🎰 Abrir Blaze (Double)</button>
+</a>
 
 </div>
 
@@ -157,7 +164,6 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText=lista;
 }
 
-// ATIVAR
 function ativarSinais(){
 
     if(!listaGlobal){
@@ -192,7 +198,6 @@ function ativarSinais(){
     document.getElementById("status").innerText = "🚀 Sinais ativados!";
 }
 
-// LOOP
 function iniciarLoop(){
 
     if(loopAtivo) return;
@@ -235,13 +240,11 @@ function iniciarLoop(){
     }, 500);
 }
 
-// COPIAR
 function copiarTudo(){
     navigator.clipboard.writeText(listaGlobal);
     alert("Copiado!");
 }
 
-// OCR
 function processarImagem(file){
 
     const reader=new FileReader();
