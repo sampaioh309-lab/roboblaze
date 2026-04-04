@@ -30,18 +30,22 @@ body{
     border:1px solid #ccc;
 }
 
-h2{text-align:center;color:#000;margin-bottom:10px}
+h2{text-align:center;margin-bottom:10px}
 
 .botao{
     width:100%;
-    padding:12px;
-    margin-top:8px;
-    border-radius:12px;
-    background:#000;
-    color:#fff;
+    padding:14px;
+    margin-top:10px;
+    border-radius:14px;
+    background:linear-gradient(45deg,#06b6d4,#22c55e);
+    color:#000;
     text-align:center;
     font-weight:bold;
     cursor:pointer;
+}
+
+.botao:active{
+    transform:scale(0.98);
 }
 
 img,canvas{
@@ -64,7 +68,7 @@ img,canvas{
     background:#000
 }
 
-#status,#porcentagem,#contador{
+#status,#porcentagem{
     text-align:center;
     margin-top:8px
 }
@@ -96,7 +100,13 @@ img,canvas{
 
 <p id="status">Aguardando imagem...</p>
 <p id="porcentagem"></p>
+
 <div id="lista"></div>
+
+<!-- BOTÕES -->
+<div class="botao" onclick="copiarLista()">📋 Copiar Lista</div>
+<div class="botao" onclick="ativarSinais()">🚀 Ativar Sinais</div>
+<div class="botao" onclick="abrirBlaze()" style="background:#facc15">🌐 Abrir Blaze</div>
 
 </div>
 
@@ -119,7 +129,7 @@ function animarCarregamento(callback){
     },60);
 }
 
-// 📋 GERAR LISTA MELHORADA
+// 📋 GERAR LISTA
 function gerarLista(p,v){
     let d=new Date();
     let h=d.getHours();
@@ -146,7 +156,7 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText = lista;
 }
 
-// 🧠 PROCESSAR IMAGEM
+// 🧠 PROCESSAR IMAGEM (OCR)
 function processarImagem(file){
 
     if(processando) return;
@@ -169,7 +179,6 @@ function processarImagem(file){
 
             let ctx = canvas.getContext("2d");
 
-            // ✂️ CORTA PARTE DE CIMA
             canvas.width = image.width;
             canvas.height = image.height * 0.35;
 
@@ -179,14 +188,12 @@ function processarImagem(file){
                 0,0,canvas.width,canvas.height
             );
 
-            // 🔥 MELHORAR CONTRASTE
             let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
             let data = imgData.data;
 
             for(let i=0;i<data.length;i+=4){
 
                 let media = (data[i]+data[i+1]+data[i+2])/3;
-
                 let cor = media > 180 ? 255 : 0;
 
                 data[i]=cor;
@@ -202,10 +209,7 @@ function processarImagem(file){
 
                 Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
 
-                    console.log("OCR:", text);
-
                     let nums = text.match(/\d+(\.\d+)?(?=\s*%)/g) || [];
-
                     nums = nums.map(n => parseFloat(n));
 
                     let p = nums[0];
@@ -245,6 +249,45 @@ function processarImagem(file){
 document.getElementById("fileInput").onchange = e=>{
     if(e.target.files[0]) processarImagem(e.target.files[0]);
 };
+
+// 📋 COPIAR
+function copiarLista(){
+    let texto = document.getElementById("lista").innerText;
+
+    if(!texto){
+        alert("⚠️ Nenhuma lista gerada");
+        return;
+    }
+
+    navigator.clipboard.writeText(texto).then(()=>{
+        alert("✅ Lista copiada!");
+    });
+}
+
+// 🚀 ATIVAR SINAIS
+function ativarSinais(){
+
+    let status = document.getElementById("status");
+
+    status.innerText = "🚀 Gerando sinais...";
+
+    let p = Math.floor(Math.random()*100);
+    let v = Math.floor(Math.random()*100);
+
+    if(p < 10) p = 50;
+    if(v < 10) v = 50;
+
+    document.getElementById("porcentagem").innerText = `⚫ ${p}% | 🔴 ${v}%`;
+
+    gerarLista(p,v);
+
+    status.innerText = "✅ Sinais ativados";
+}
+
+// 🌐 ABRIR BLAZE
+function abrirBlaze(){
+    window.open("https://blaze.com", "_blank");
+}
 
 </script>
 
