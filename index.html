@@ -120,7 +120,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-// PERMISSÃO
 Notification.requestPermission().then((permission) => {
   if (permission === "granted") {
     getToken(messaging, {
@@ -131,7 +130,6 @@ Notification.requestPermission().then((permission) => {
   }
 });
 
-// RECEBER COM APP ABERTO
 onMessage(messaging, (payload) => {
   alert(payload.notification.title + "\n" + payload.notification.body);
 });
@@ -141,21 +139,33 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
-// ================= RESTO DO ROBÔ =================
+// ================= ROBÔ =================
 
 let listaGlobal = "";
 
-function abrirCamera(){cameraInput.click();}
-function abrirGaleria(){fileInput.click();}
-function abrirBlaze(){window.location.href="https://blaze.com";}
+// BOTÕES CORRIGIDOS
+function abrirCamera(){
+    document.getElementById("cameraInput").click();
+}
 
+function abrirGaleria(){
+    document.getElementById("fileInput").click();
+}
+
+function abrirBlaze(){
+    window.location.href="https://blaze.com";
+}
+
+// CARREGAMENTO
 function animarCarregamento(callback){
     let progresso = document.getElementById("progresso");
+    progresso.style.width = "0%";
     let valor = 0;
 
     let intervalo = setInterval(()=>{
         valor += 5;
         progresso.style.width = valor + "%";
+
         if(valor >= 100){
             clearInterval(intervalo);
             setTimeout(callback, 300);
@@ -163,8 +173,7 @@ function animarCarregamento(callback){
     },80);
 }
 
-function normalizar(v){if(v>100)v=v/10;return v;}
-
+// GERAR LISTA
 function gerarLista(p,v){
     let d=new Date();
     let h=d.getHours(),m=d.getMinutes();
@@ -180,14 +189,16 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText=lista;
 }
 
+// ATIVAR
 function ativarSinais(){
     if(!listaGlobal){
         alert("Gere a lista primeiro!");
         return;
     }
-    alert("🔥 Agora use Firebase para envio automático!");
+    alert("🔥 Agora envie pelo Firebase");
 }
 
+// COPIAR
 function copiarTudo(){
     navigator.clipboard.writeText(listaGlobal);
     alert("Copiado!");
@@ -226,8 +237,8 @@ function processarImagem(file){
                         return;
                     }
 
-                    let p=normalizar(parseFloat(nums[0]));
-                    let v=normalizar(parseFloat(nums[1]));
+                    let p=parseFloat(nums[0]);
+                    let v=parseFloat(nums[1]);
 
                     porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
 
@@ -246,8 +257,14 @@ function processarImagem(file){
     reader.readAsDataURL(file);
 }
 
-cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
-fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
+// EVENTOS
+document.getElementById("cameraInput").onchange = e=>{
+    if(e.target.files[0]) processarImagem(e.target.files[0]);
+};
+
+document.getElementById("fileInput").onchange = e=>{
+    if(e.target.files[0]) processarImagem(e.target.files[0]);
+};
 
 </script>
 
