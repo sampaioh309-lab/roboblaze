@@ -11,13 +11,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
 body{
     font-family: Arial;
-    background:#ffffff;
-    color:#000;
+    background: linear-gradient(135deg,#020617,#0f172a);
+    color:#e2e8f0;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -27,32 +31,49 @@ body{
 #app{
     width:95%;
     max-width:420px;
-    background:#fff;
+    background:#020617;
     border-radius:20px;
     padding:16px;
-    border:1px solid #ccc;
+    border:1px solid #1e293b;
 }
 
-h2{text-align:center;color:#000;margin-bottom:10px}
+h2{text-align:center;color:#38bdf8;margin-bottom:10px}
 
-.botao{
+button,.botao{
     width:100%;
     padding:12px;
     margin-top:8px;
+    border:none;
     border-radius:12px;
-    background:#000;
-    color:#fff;
-    text-align:center;
+    background:linear-gradient(90deg,#00f5ff,#00ff95);
+    color:#000;
     font-weight:bold;
+    text-align:center;
 }
+
+#blaze{background:#facc15;}
 
 img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
-#barra{height:16px;border:1px solid #ccc;border-radius:20px;overflow:hidden;margin-top:10px}
-#progresso{height:100%;width:0%;background:#000}
+#barra{
+    height:16px;
+    background:#020617;
+    border:1px solid #334155;
+    border-radius:20px;
+    overflow:hidden;
+    margin-top:10px;
+}
 
-#status,#porcentagem,#contador{text-align:center;margin-top:8px}
-#lista{white-space:pre-line;margin-top:10px;border:1px solid #ccc;padding:10px;border-radius:12px}
+#progresso{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#00f5ff,#00ff95);
+}
+
+#status{text-align:center;margin-top:8px}
+#porcentagem{text-align:center;margin-top:5px}
+#contador{text-align:center;margin-top:10px;color:#facc15}
+#lista{white-space:pre-line;margin-top:10px;border:1px solid #334155;padding:10px;border-radius:12px}
 </style>
 
 </head>
@@ -62,6 +83,9 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 <div id="app">
 
 <h2>📸 Robô Double PRO</h2>
+
+<label for="cameraInput" class="botao">📸 Tirar Foto</label>
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
 
 <label for="fileInput" class="botao">🖼️ Galeria</label>
 <input type="file" id="fileInput" accept="image/*" style="display:none">
@@ -73,42 +97,94 @@ img,canvas{width:100%;margin-top:10px;border-radius:12px}
 
 <p id="status">Aguardando imagem...</p>
 <p id="porcentagem"></p>
+<p id="contador"></p>
+
 <div id="lista"></div>
+
+<button onclick="copiarTudo()">📋 Copiar Lista</button>
+<button onclick="ativarSinais()">🚀 Ativar Sinais</button>
+<button id="blaze" onclick="abrirBlaze()">🌐 Abrir Blaze</button>
 
 </div>
 
 <script>
 
+// ================= FIREBASE =================
+const firebaseConfig = {
+  apiKey: "AIzaSyABwBwgQ3OREckh9LC8DRmN8KwOKKy6l_A",
+  authDomain: "roboblaze-8dfde.firebaseapp.com",
+  projectId: "roboblaze-8dfde",
+  messagingSenderId: "88914971613",
+  appId: "1:88914971613:web:a04143458a9ea4fdac0434"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+Notification.requestPermission().then((permission) => {
+  if (permission === "granted") {
+    messaging.getToken({
+      vapidKey: "BMQ-zkZ9SLHAlRY0Mmy6F4Srf468OZl0VVL0qn9B-Bc11bQz-hy-gX7LNB9XoHHD5XIciMVwyYoRcyBm9ZoXb3E"
+    }).then((token) => {
+      console.log("TOKEN:", token);
+    });
+  }
+});
+
+messaging.onMessage((payload) => {
+  alert(payload.notification.title + "\n" + payload.notification.body);
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+// ================= ROBÔ =================
+
 let listaGlobal = "";
 let processando = false;
 
+// BLAZE
+function abrirBlaze(){
+    window.location.href="https://blaze.com";
+}
+
 // CARREGAMENTO
 function animarCarregamento(callback){
-    let p = document.getElementById("progresso");
-    let v = 0;
+    let progresso = document.getElementById("progresso");
+    progresso.style.width = "0%";
+    let valor = 0;
 
-    let i = setInterval(()=>{
-        v+=5;
-        p.style.width = v+"%";
-        if(v>=100){
-            clearInterval(i);
-            setTimeout(callback,300);
+    let intervalo = setInterval(()=>{
+        valor += 5;
+        progresso.style.width = valor + "%";
+
+        if(valor >= 100){
+            clearInterval(intervalo);
+            setTimeout(callback, 300);
         }
     },80);
 }
 
 // GERAR LISTA
 function gerarLista(p,v){
-    let d=new Date();
-    let h=d.getHours();
-    let m=d.getMinutes();
-    let lista="";
+
+    let d = new Date();
+    let h = d.getHours();
+    let m = d.getMinutes();
+
+    let lista = "";
 
     for(let i=0;i<10;i++){
-        m+=3;
-        if(m>=60){m-=60;h++;}
+
+        m += 3;
+        if(m >= 60){
+            m -= 60;
+            h++;
+        }
 
         let cor = Math.random() < (v/100) ? "🔴" : "⚫";
+
         lista += `${h}:${m.toString().padStart(2,'0')} → ${cor}+⚪️\n`;
     }
 
@@ -116,7 +192,21 @@ function gerarLista(p,v){
     document.getElementById("lista").innerText = lista;
 }
 
-// OCR OTIMIZADO
+// BOTÕES
+function ativarSinais(){
+    if(!listaGlobal){
+        alert("Gere a lista primeiro!");
+        return;
+    }
+    alert("🔥 Agora envie pelo Firebase");
+}
+
+function copiarTudo(){
+    navigator.clipboard.writeText(listaGlobal);
+    alert("Copiado!");
+}
+
+// OCR CORRIGIDO
 function processarImagem(file){
 
     if(processando) return;
@@ -139,51 +229,41 @@ function processarImagem(file){
 
             let ctx = canvas.getContext("2d");
 
-            // 🔥 CORTA SÓ TOPO
             canvas.width = image.width;
-            canvas.height = image.height * 0.35;
+            canvas.height = image.height;
 
-            ctx.drawImage(image, 0, 0, image.width, image.height * 0.35, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image,0,0);
 
-            // 🔥 CONTRASTE FORTE (FUNDO BRANCO)
-            let imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-            let data = imgData.data;
-
-            for(let i=0;i<data.length;i+=4){
-
-                let media = (data[i]+data[i+1]+data[i+2])/3;
-                let cor = media > 200 ? 255 : 0;
-
-                data[i]=data[i+1]=data[i+2]=cor;
-            }
-
-            ctx.putImageData(imgData,0,0);
-
-            status.innerText="🔄 Lendo porcentagem...";
+            status.innerText = "🔄 Processando...";
 
             animarCarregamento(()=>{
 
                 Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
 
-                    console.log("OCR:", text);
+                    console.log("OCR TEXTO:", text);
 
-                    let nums = text.match(/\d+(\.\d+)?(?=\s*%)/g) || [];
+                    let limpo = text.replace(/[^\d.\n]/g, " ");
+                    let nums = limpo.match(/\d+(\.\d+)?/g);
 
-                    nums = nums.map(n => parseFloat(n));
+                    let p = 50;
+                    let v = 50;
 
-                    let p = nums[0] || 50;
-                    let v = nums[1] || 50;
+                    if(nums && nums.length >= 2){
+                        p = parseFloat(nums[0]);
+                        v = parseFloat(nums[1]);
 
-                    if(p > 100 || v > 100 || p < 5 || v < 5){
-                        p = 50;
-                        v = 50;
+                        if(p > 100 || v > 100){
+                            p = 50;
+                            v = 50;
+                        }
                     }
 
                     porcentagem.innerText = `⚫ ${p}% | 🔴 ${v}%`;
 
                     gerarLista(p,v);
 
-                    status.innerText="✅ Lista gerada";
+                    status.innerText = "✅ Lista gerada";
+
                     processando = false;
                 });
 
@@ -197,8 +277,12 @@ function processarImagem(file){
     reader.readAsDataURL(file);
 }
 
-// EVENTO
-document.getElementById("fileInput").onchange = e=>{
+// EVENTOS (SEM DUPLICAR)
+document.getElementById("cameraInput").onchange = function(e){
+    if(e.target.files[0]) processarImagem(e.target.files[0]);
+};
+
+document.getElementById("fileInput").onchange = function(e){
     if(e.target.files[0]) processarImagem(e.target.files[0]);
 };
 
