@@ -15,7 +15,7 @@ body{
     overflow-y:auto;
 }
 
-/* 🔥 FUNDO ANIMADO FORTE */
+/* FUNDO ANIMADO */
 .fundo{
     position:fixed;
     width:100%;
@@ -30,7 +30,6 @@ body{
     animation: gridMove 2s linear infinite;
 }
 
-/* brilho girando */
 .fundo::before{
     content:"";
     position:absolute;
@@ -40,7 +39,6 @@ body{
     animation: girar 6s linear infinite;
 }
 
-/* linhas passando */
 .fundo::after{
     content:"";
     position:absolute;
@@ -65,14 +63,11 @@ body{
     to{ transform:translateX(100%); }
 }
 
-/* mantém tudo acima do fundo */
 .container{
     position:relative;
     z-index:1;
     padding-bottom:80px;
 }
-
-/* RESTO DO SEU CÓDIGO (NÃO ALTERADO) */
 
 .topo{
     text-align:center;
@@ -288,6 +283,7 @@ function horaMin(d){
     });
 }
 
+// 🔥 ALTERAÇÃO AQUI
 function gerarSinais(){
 
     if(!pronto){
@@ -301,6 +297,7 @@ function gerarSinais(){
     lista.innerHTML="";
 
     let agora = new Date();
+    agora.setMinutes(agora.getMinutes() + 3); // 👈 +3 MINUTOS
 
     for(let i=0;i<10;i++){
 
@@ -323,4 +320,4 @@ function gerarSinais(){
 </script>
 
 </body>
-</html>
+                                                </html>
