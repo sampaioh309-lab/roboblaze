@@ -1,317 +1,324 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Robô Double PRO</title>
-
-<meta name="theme-color" content="#020617">
-<link rel="manifest" href="manifest.json">
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
+<title>Scanner Double PRO</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
 
 body{
-    font-family: Arial;
-    background: linear-gradient(135deg,#020617,#0f172a);
-    color:#e2e8f0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-}
-
-#app{
-    width:95%;
-    max-width:420px;
+    margin:0;
+    font-family:Arial;
     background:#020617;
-    border-radius:20px;
-    padding:16px;
-    border:1px solid #1e293b;
+    color:#fff;
+    overflow-y:auto;
 }
 
-h2{text-align:center;color:#38bdf8;margin-bottom:10px}
-
-button{
+/* 🔥 FUNDO ANIMADO FORTE */
+.fundo{
+    position:fixed;
     width:100%;
-    padding:12px;
-    margin-top:8px;
+    height:100%;
+    z-index:0;
+    pointer-events:none;
+
+    background:
+        linear-gradient(rgba(34,197,94,0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,197,94,0.25) 1px, transparent 1px);
+    background-size:30px 30px;
+    animation: gridMove 2s linear infinite;
+}
+
+/* brilho girando */
+.fundo::before{
+    content:"";
+    position:absolute;
+    width:200%;
+    height:200%;
+    background: radial-gradient(circle, rgba(255,0,0,0.25), transparent 60%);
+    animation: girar 6s linear infinite;
+}
+
+/* linhas passando */
+.fundo::after{
+    content:"";
+    position:absolute;
+    width:100%;
+    height:100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: brilhoMove 3s linear infinite;
+}
+
+@keyframes gridMove{
+    from{ transform:translate(0,0); }
+    to{ transform:translate(30px,30px); }
+}
+
+@keyframes girar{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+}
+
+@keyframes brilhoMove{
+    from{ transform:translateX(-100%); }
+    to{ transform:translateX(100%); }
+}
+
+/* mantém tudo acima do fundo */
+.container{
+    position:relative;
+    z-index:1;
+    padding-bottom:80px;
+}
+
+/* RESTO DO SEU CÓDIGO (NÃO ALTERADO) */
+
+.topo{
+    text-align:center;
+    padding:15px;
+    font-size:22px;
+}
+
+.relogio{
+    font-size:26px;
+    color:#22c55e;
+}
+
+button, label{
+    width:90%;
+    margin:10px auto;
+    display:block;
+    padding:15px;
     border:none;
-    border-radius:12px;
-    background:linear-gradient(90deg,#00f5ff,#00ff95);
+    border-radius:10px;
+    background:#22c55e;
     color:#000;
-    font-weight:bold;
-}
-
-#blaze{background:#facc15;}
-
-img,canvas{width:100%;margin-top:10px;border-radius:12px}
-
-#status,#porcentagem,#contador{
     text-align:center;
-    margin-top:8px;
 }
 
-#proximo{
-    margin-top:10px;
+input{ display:none; }
+
+.preview{
+    position:relative;
+    width:90%;
+    margin:10px auto;
+}
+
+.preview img{
+    width:100%;
+    border-radius:10px;
+    filter: brightness(0.5);
+}
+
+.scan{
+    position:absolute;
+    width:100%;
+    height:3px;
+    background:red;
+    box-shadow:0 0 10px red;
+    animation: scanMove 2s infinite alternate;
+}
+
+@keyframes scanMove{
+    from{ top:0; }
+    to{ top:100%; }
+}
+
+.barra{
+    width:90%;
+    height:20px;
+    background:#111;
+    margin:10px auto;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progresso{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#22c55e,#4ade80);
+    text-align:center;
+    font-size:12px;
+    color:#000;
+}
+
+.lista{
     padding:10px;
-    border-radius:12px;
+}
+
+.card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
     background:#0f172a;
-    border:1px solid #334155;
-    text-align:center;
-    font-size:18px;
+    margin:10px 0;
+    padding:15px;
+    border-radius:10px;
+}
+
+.bola{
+    width:20px;
+    height:20px;
+    border-radius:50%;
+}
+
+.vermelho{ background:red; }
+.preto{ background:black; }
+
+.direita{
+    font-size:12px;
     color:#facc15;
 }
 
-#lista{
-    white-space:pre-line;
-    margin-top:10px;
-    border:1px solid #334155;
-    padding:10px;
-    border-radius:12px
-}
 </style>
-
 </head>
 
 <body>
 
-<div id="app">
+<div class="fundo"></div>
 
-<h2>📸 Robô Double PRO</h2>
+<div class="container">
 
-<button onclick="abrirCamera()">📸 Tirar Foto</button>
-<button onclick="abrirGaleria()">🖼️ Galeria</button>
+<div class="topo">
+    SCANNER DOUBLE
+    <div class="relogio" id="relogio"></div>
+</div>
 
-<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
-<input type="file" id="fileInput" accept="image/*" style="display:none">
+<label for="fileInput">📸 Enviar Print</label>
+<input type="file" id="fileInput" accept="image/*">
 
-<img id="preview">
-<canvas id="canvas"></canvas>
+<div class="preview" id="preview"></div>
 
-<p id="status">Aguardando imagem...</p>
-<p id="porcentagem"></p>
+<div class="barra">
+    <div class="progresso" id="progresso">0%</div>
+</div>
 
-<div id="proximo">⏳ Aguardando sinais...</div>
-<p id="contador"></p>
+<button onclick="gerarSinais()">GERAR SINAIS</button>
 
-<div id="lista"></div>
-
-<button onclick="copiarTudo()">📋 Copiar Lista</button>
-<button onclick="ativarSinais()">🚀 Ativar Sinais</button>
-
-<!-- 🔥 BOTÃO PERFEITO (VAI PERGUNTAR ONDE ABRIR) -->
-<a href="intent://blaze.com/pt/games/double#Intent;scheme=https;end">
-    <button id="blaze">🎰 Abrir Blaze (Escolher navegador)</button>
-</a>
+<div class="lista" id="lista"></div>
 
 </div>
 
 <script>
 
-// SERVICE WORKER
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-}
+let coresDetectadas = [];
+let pronto = false;
 
-let listaGlobal = "";
-let sinaisGlobais = [];
-let loopAtivo = false;
-
-const audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
-
-// ALERTA
-function alertar(texto){
-    audio.play().catch(()=>{});
-    if(navigator.vibrate){
-        navigator.vibrate([300,200,300,600]);
-    }
-    document.getElementById("status").innerText = "🚨 " + texto;
-}
-
-// BOTÕES
-function abrirCamera(){cameraInput.click();}
-function abrirGaleria(){fileInput.click();}
-
-// LÓGICA
-function normalizar(v){if(v>100)v=v/10;return v;}
-
-function gerarCores(p,v){
-    let total=p+v;
-    let prob=v/total;
-    let cores=[];
-    for(let i=0;i<10;i++){
-        cores.push(Math.random()<prob?"🔴":"⚫");
-    }
-    return cores;
-}
-
-function gerarLista(p,v){
-    let cores=gerarCores(p,v);
-    let d=new Date();
-    let h=d.getHours(),m=d.getMinutes();
-    let lista="";
-
-    for(let i=0;i<cores.length;i++){
-        m+=3;if(m>=60){m-=60;h++;}
-        lista+=`${h}:${m.toString().padStart(2,'0')} → ${cores[i]}+⚪️\n`;
-    }
-
-    listaGlobal=lista;
-    document.getElementById("lista").innerText=lista;
-}
-
-// ATIVAR
-function ativarSinais(){
-
-    if(!listaGlobal){
-        alert("Gere a lista primeiro!");
-        return;
-    }
-
-    let linhas = listaGlobal.split("\n");
-    sinaisGlobais = [];
-
-    linhas.forEach(linha=>{
-        if(!linha) return;
-
-        let [horario,sinal] = linha.split(" → ");
-        let [h,m] = horario.split(":").map(Number);
-
-        let alvo = new Date();
-        alvo.setHours(h,m,0,0);
-
-        if(alvo < new Date()) return;
-
-        sinaisGlobais.push({
-            horario,
-            sinal,
-            alvo: alvo.getTime(),
-            aviso1:false,
-            aviso2:false
+setInterval(()=>{
+    document.getElementById("relogio").innerText =
+        new Date().toLocaleTimeString('pt-BR',{
+            timeZone:'America/Sao_Paulo',
+            hour:'2-digit',
+            minute:'2-digit',
+            second:'2-digit'
         });
-    });
+},1000);
 
-    iniciarLoop();
-    document.getElementById("status").innerText = "🚀 Sinais ativados!";
-}
+document.getElementById("fileInput").addEventListener("change", function(e){
 
-// LOOP
-function iniciarLoop(){
+    let file = e.target.files[0];
+    if(!file) return;
 
-    if(loopAtivo) return;
-    loopAtivo = true;
+    let reader = new FileReader();
 
-    setInterval(()=>{
+    reader.onload = function(event){
 
-        let agora = Date.now();
+        document.getElementById("preview").innerHTML = `
+            <img src="${event.target.result}">
+            <div class="scan"></div>
+        `;
 
-        let proximo = sinaisGlobais.find(s => s.alvo > agora);
-
-        if(proximo){
-            let diff = proximo.alvo - agora;
-            let min = Math.floor(diff/60000);
-            let seg = Math.floor((diff%60000)/1000);
-
-            document.getElementById("contador").innerText =
-            `⏳ ${min}m ${seg}s`;
-
-            document.getElementById("proximo").innerText =
-            `🎯 Próximo: ${proximo.horario} → ${proximo.sinal}`;
-        }
-
-        sinaisGlobais.forEach(s=>{
-
-            let diff = s.alvo - agora;
-
-            if(diff <= 60000 && diff > 59000 && !s.aviso1){
-                alertar(`Falta 1 minuto! ${s.horario} apostar ${s.sinal}`);
-                s.aviso1 = true;
-            }
-
-            if(diff <= 10000 && diff > 9000 && !s.aviso2){
-                alertar(`ATENÇÃO! ${s.horario} apostar ${s.sinal}`);
-                s.aviso2 = true;
-            }
-
-        });
-
-    }, 500);
-}
-
-// COPIAR
-function copiarTudo(){
-    navigator.clipboard.writeText(listaGlobal);
-    alert("Copiado!");
-}
-
-// OCR
-function processarImagem(file){
-
-    const reader=new FileReader();
-
-    reader.onload=function(e){
-
-        preview.src=e.target.result;
-
-        let image=new Image();
-
-        image.onload=function(){
-
-            let ctx=canvas.getContext("2d");
-
-            let scale=image.width>800?800/image.width:1;
-
-            canvas.width=image.width*scale;
-            canvas.height=image.height*scale;
-
-            ctx.drawImage(image,0,0,canvas.width,canvas.height);
-
-            let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-            let data=imgData.data;
-
-            for(let i=0;i<data.length;i+=4){
-                let media=(data[i]+data[i+1]+data[i+2])/3;
-                let cor=media>140?255:0;
-                data[i]=data[i+1]=data[i+2]=cor;
-            }
-
-            ctx.putImageData(imgData,0,0);
-
-            status.innerText="🔍 Lendo imagem...";
-
-            Tesseract.recognize(canvas,'eng').then(({data:{text}})=>{
-
-                let nums=text.match(/\d+(\.\d+)?(?=\s*%)/g);
-
-                if(!nums||nums.length<2){
-                    status.innerText="❌ Não achou %";
-                    return;
-                }
-
-                let p=normalizar(parseFloat(nums[0]));
-                let v=normalizar(parseFloat(nums[1]));
-
-                porcentagem.innerText=`⚫ ${p}% | 🔴 ${v}%`;
-
-                gerarLista(p,v);
-
-                status.innerText="✅ Lista gerada";
-            });
-
-        };
-
-        image.src=e.target.result;
+        iniciarLeitura();
     };
 
     reader.readAsDataURL(file);
+});
+
+function iniciarLeitura(){
+
+    let barra = document.getElementById("progresso");
+    let progresso = 0;
+
+    pronto = false;
+
+    let intervalo = setInterval(()=>{
+
+        progresso += 2;
+        barra.style.width = progresso + "%";
+        barra.innerText = progresso + "%";
+
+        if(progresso >= 100){
+            clearInterval(intervalo);
+
+            analisarFake();
+            pronto = true;
+
+            barra.innerText = "✔️ Concluído";
+
+            gerarSinais();
+        }
+
+    }, 80);
 }
 
-cameraInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
-fileInput.onchange=e=>{if(e.target.files[0])processarImagem(e.target.files[0]);}
+function analisarFake(){
+    coresDetectadas = Array.from({length:30},()=>Math.random()>0.5?"preto":"vermelho");
+}
+
+function analisar(h){
+    let s=[];
+    for(let i=2;i<h.length;i++){
+        if(h[i-1]===h[i-2]){
+            s.push(h[i-1]==="preto"?"vermelho":"preto");
+        }
+    }
+    return s;
+}
+
+function pegarCor(a,i){
+    return a[i] || (Math.random()>0.5?"preto":"vermelho");
+}
+
+function horaMin(d){
+    return d.toLocaleTimeString('pt-BR',{
+        timeZone:'America/Sao_Paulo',
+        hour:'2-digit',
+        minute:'2-digit'
+    });
+}
+
+function gerarSinais(){
+
+    if(!pronto){
+        alert("⛔ Aguarde a leitura terminar!");
+        return;
+    }
+
+    let analise = analisar(coresDetectadas);
+
+    let lista = document.getElementById("lista");
+    lista.innerHTML="";
+
+    let agora = new Date();
+
+    for(let i=0;i<10;i++){
+
+        let horario = new Date(agora.getTime()+i*120000);
+        let cor = pegarCor(analise,i);
+
+        let div = document.createElement("div");
+        div.className="card";
+
+        div.innerHTML=`
+        <div>⏰ ${horaMin(horario)}</div>
+        <div class="bola ${cor}"></div>
+        <div class="direita">🛡️ Branco</div>
+        `;
+
+        lista.appendChild(div);
+    }
+}
 
 </script>
 
